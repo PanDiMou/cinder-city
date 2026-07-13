@@ -1,0 +1,181 @@
+<svg viewBox="0 0 1600 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cinder City">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#1a86cf"/>
+      <stop offset="45%" stop-color="#4fb0e6"/>
+      <stop offset="100%" stop-color="#cfeaf7"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="82%" cy="12%" r="55%">
+      <stop offset="0%"  stop-color="#fff7d6" stop-opacity="0.9"/>
+      <stop offset="45%" stop-color="#ffe9a8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffe9a8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="street" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c9b79c"/>
+      <stop offset="100%" stop-color="#9c8a70"/>
+    </linearGradient>
+    <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#06202e" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#06202e" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#06202e" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#06202e" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="titleFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#fff2cf"/>
+      <stop offset="100%" stop-color="#ffcf5c"/>
+    </linearGradient>
+    <clipPath id="frame"><rect x="0" y="0" width="1600" height="500" rx="18"/></clipPath>
+
+    <!-- Palmier low-poly réutilisable -->
+    <g id="palm">
+      <polygon points="-7,0 7,0 10,-150 -1,-154 -5,-150" fill="#8a6a3e"/>
+      <polygon points="-1,-152 -5,-150 -3,-80 0,-80" fill="#6f5330"/>
+      <!-- fronds -->
+      <polygon points="0,-150 78,-176 128,-160 46,-146" fill="#3f8f39"/>
+      <polygon points="0,-152 66,-216 120,-224 44,-166" fill="#4aa142"/>
+      <polygon points="2,-152 6,-228 -8,-262 -16,-224" fill="#57b04d"/>
+      <polygon points="0,-150 -70,-176 -124,-160 -44,-146" fill="#357a30"/>
+      <polygon points="0,-152 -60,-214 -116,-222 -42,-166" fill="#3f8f39"/>
+      <polygon points="-2,-152 -30,-206 -78,-228 -22,-168" fill="#4aa142"/>
+      <polygon points="2,-152 34,-206 82,-228 24,-168" fill="#357a30"/>
+    </g>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <!-- SKY -->
+    <rect x="0" y="0" width="1600" height="360" fill="url(#sky)"/>
+    <rect x="0" y="0" width="1600" height="360" fill="url(#sunGlow)"/>
+
+    <!-- NUAGES low-poly -->
+    <g>
+      <g transform="translate(250,90)">
+        <polygon points="-70,10 -30,-18 20,-24 60,-4 78,12 -78,12" fill="#ffffff"/>
+        <polygon points="-78,12 78,12 60,22 -60,22" fill="#d7ecf8"/>
+      </g>
+      <g transform="translate(1120,70) scale(1.2)">
+        <polygon points="-70,10 -30,-18 20,-24 60,-4 78,12 -78,12" fill="#ffffff"/>
+        <polygon points="-78,12 78,12 60,22 -60,22" fill="#d7ecf8"/>
+      </g>
+      <g transform="translate(650,140) scale(0.8)">
+        <polygon points="-70,10 -30,-18 20,-24 60,-4 78,12 -78,12" fill="#ffffff"/>
+        <polygon points="-78,12 78,12 60,22 -60,22" fill="#d7ecf8"/>
+      </g>
+    </g>
+
+    <!-- SKYLINE low-poly -->
+    <g>
+      <!-- gratte-ciels vitrés sombres -->
+      <rect x="70" y="150" width="90" height="210" fill="#26343f"/>
+      <rect x="70" y="150" width="30" height="210" fill="#31434f"/>
+      <rect x="1180" y="120" width="120" height="240" fill="#233039"/>
+      <rect x="1180" y="120" width="40" height="240" fill="#2e414c"/>
+      <rect x="1330" y="175" width="95" height="185" fill="#26343f"/>
+      <rect x="1440" y="145" width="110" height="215" fill="#233039"/>
+      <rect x="1440" y="145" width="36" height="215" fill="#2e414c"/>
+      <!-- reflets fenêtres -->
+      <g fill="#7fd4e8" opacity="0.75">
+        <rect x="80" y="170" width="10" height="16"/><rect x="80" y="200" width="10" height="16"/>
+        <rect x="80" y="230" width="10" height="16"/>
+        <rect x="1192" y="140" width="12" height="18"/><rect x="1192" y="176" width="12" height="18"/>
+        <rect x="1192" y="212" width="12" height="18"/>
+        <rect x="1452" y="165" width="12" height="18"/><rect x="1452" y="201" width="12" height="18"/>
+      </g>
+
+      <!-- Tour Art-déco crème (clin d'oeil "PALM") -->
+      <g transform="translate(760,0)">
+        <rect x="-55" y="120" width="110" height="240" fill="#e6d7a4"/>
+        <rect x="-55" y="120" width="38" height="240" fill="#d6c488"/>
+        <polygon points="-55,120 0,72 55,120" fill="#efe3ba"/>
+        <polygon points="-55,120 0,72 -20,120" fill="#d6c488"/>
+        <rect x="-6" y="40" width="12" height="34" fill="#c9b268"/>
+        <!-- fenêtres verticales -->
+        <g fill="#b89a5a">
+          <rect x="-40" y="150" width="8" height="180"/>
+          <rect x="-20" y="150" width="8" height="180"/>
+          <rect x="0" y="150" width="8" height="180"/>
+          <rect x="20" y="150" width="8" height="180"/>
+          <rect x="40" y="150" width="8" height="180"/>
+        </g>
+      </g>
+
+      <!-- billboard coloré -->
+      <g transform="translate(600,215)">
+        <rect x="-2" y="0" width="6" height="145" fill="#3a4a54"/>
+        <rect x="-70" y="-70" width="150" height="80" rx="4" fill="#e0559b"/>
+        <rect x="-70" y="-70" width="150" height="80" rx="4" fill="none" stroke="#ffd54a" stroke-width="4"/>
+        <circle cx="-35" cy="-30" r="14" fill="#ffd54a"/>
+        <rect x="-8" y="-52" width="70" height="10" rx="3" fill="#3fd0c8"/>
+        <rect x="-8" y="-34" width="55" height="8" rx="3" fill="#ffffff" opacity="0.9"/>
+        <rect x="-8" y="-20" width="62" height="8" rx="3" fill="#ffffff" opacity="0.6"/>
+      </g>
+    </g>
+
+    <!-- RUE -->
+    <rect x="0" y="360" width="1600" height="140" fill="url(#street)"/>
+    <!-- trottoir -->
+    <rect x="0" y="360" width="1600" height="14" fill="#8a795f"/>
+    <!-- marquage -->
+    <g fill="#f4ead2" opacity="0.85">
+      <rect x="120" y="452" width="70" height="9"/>
+      <rect x="300" y="452" width="70" height="9"/>
+      <rect x="480" y="452" width="70" height="9"/>
+      <rect x="1050" y="452" width="70" height="9"/>
+      <rect x="1230" y="452" width="70" height="9"/>
+      <rect x="1410" y="452" width="70" height="9"/>
+    </g>
+
+    <!-- voiture rouge low-poly -->
+    <g transform="translate(210,430)">
+      <polygon points="-95,20 95,20 85,-14 40,-40 -50,-40 -85,-14" fill="#d63a2f"/>
+      <polygon points="-50,-40 40,-40 30,-16 -40,-16" fill="#bde6f2"/>
+      <polygon points="-95,20 95,20 90,32 -90,32" fill="#a82a22"/>
+      <circle cx="-55" cy="30" r="18" fill="#1a1a1f"/><circle cx="-55" cy="30" r="8" fill="#555"/>
+      <circle cx="58" cy="30" r="18" fill="#1a1a1f"/><circle cx="58" cy="30" r="8" fill="#555"/>
+      <polygon points="85,-14 96,-6 96,6 85,4" fill="#ffe08a"/>
+    </g>
+
+    <!-- PALMIERS avant-plan -->
+    <use href="#palm" transform="translate(1470,420) scale(1.15)"/>
+    <use href="#palm" transform="translate(70,430) scale(0.95)"/>
+    <use href="#palm" transform="translate(1360,440) scale(0.72)"/>
+
+    <!-- SCRIM pour lisibilité du bloc texte -->
+    <rect x="0" y="138" width="1600" height="278" fill="url(#scrim)"/>
+
+    <!-- KICKER -->
+    <g text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif">
+      <text x="800" y="188" font-size="18" font-weight="700" letter-spacing="10"
+            fill="#ffe9b0">SANDBOX OPEN WORLD</text>
+    </g>
+
+    <!-- TITRE gaming -->
+    <g text-anchor="middle" font-family="'Arial Black',Impact,sans-serif">
+      <text x="805" y="286" font-size="122" font-weight="900" font-style="italic"
+            letter-spacing="1" fill="#06202e" opacity="0.5">CINDER CITY</text>
+      <text x="800" y="280" font-size="122" font-weight="900" font-style="italic"
+            letter-spacing="1" fill="url(#titleFill)"
+            stroke="#123244" stroke-width="7" paint-order="stroke">CINDER CITY</text>
+    </g>
+    <!-- accent sous le titre -->
+    <polygon points="664,302 936,302 928,314 656,314" fill="#ffcf3f"/>
+
+    <!-- CHIPS -->
+    <g font-family="'Segoe UI',Arial,sans-serif" text-anchor="middle">
+      <g>
+        <rect x="629" y="332" width="90" height="30" rx="15" fill="#0c2331" fill-opacity="0.82" stroke="#7fd4e8" stroke-width="1.5"/>
+        <text x="674" y="352" font-size="15" font-weight="700" letter-spacing="1" fill="#dff6ff">C++23</text>
+      </g>
+      <g>
+        <rect x="731" y="332" width="102" height="30" rx="15" fill="#0c2331" fill-opacity="0.82" stroke="#7fd4e8" stroke-width="1.5"/>
+        <text x="782" y="352" font-size="15" font-weight="700" letter-spacing="1" fill="#dff6ff">SDL_GPU</text>
+      </g>
+      <g>
+        <rect x="845" y="332" width="118" height="30" rx="15" fill="#ffcf3f"/>
+        <text x="904" y="352" font-size="15" font-weight="800" letter-spacing="1" fill="#1a2b16">SOLO DEV</text>
+      </g>
+    </g>
+
+    <rect x="1" y="1" width="1598" height="498" rx="18" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2"/>
+  </g>
+</svg>
