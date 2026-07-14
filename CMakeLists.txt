@@ -21,6 +21,9 @@ add_executable(CinderCity
         src/main.cpp
         src/engine/core/window.cpp
         src/engine/core/application.cpp
+        src/engine/core/platform.cpp
+        src/engine/render/graphics_device.cpp
+        src/engine/core/log.cpp
 )
 target_include_directories(CinderCity PRIVATE src)
 target_link_libraries(CinderCity PRIVATE SDL3::SDL3)

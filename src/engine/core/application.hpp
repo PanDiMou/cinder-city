@@ -6,25 +6,26 @@
 #ifndef CINDER_CITY_APPLICATION_HPP
 #define CINDER_CITY_APPLICATION_HPP
 
-#include "window.hpp"
-
-#include <optional>
+#include "engine/core/platform.hpp"
+#include "engine/core/window.hpp"
+#include "engine/render/graphics_device.hpp"
 
 namespace cinder {
     class application {
     public:
-        application();
+        application() = default;
         application(const application&) = delete;
         application& operator=(const application&) = delete;
-
-        ~application();
 
         void run();
     private:
         void process_events();
+        void render() const;
 
-        std::optional<window> window_;
-        bool running_ {true};
+        platform        platform_;
+        window          window_;
+        graphics_device graphics_device_ {window_};
+        bool            running_ {true};
     };
 }
 

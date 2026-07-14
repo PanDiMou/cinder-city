@@ -16,6 +16,10 @@ namespace cinder {
         window& operator=(const window&) = delete;
 
         ~window();
+
+        [[nodiscard]] SDL_Window* native() const noexcept {
+            return handle_;
+        }
     private:
         SDL_Window* handle_ {nullptr};
     };
