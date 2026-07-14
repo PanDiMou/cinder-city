@@ -35,4 +35,4 @@ add_executable(CinderCity
 )
 target_include_directories(CinderCity PRIVATE src)
 target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm)
-
+target_compile_definitions(CinderCity PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
