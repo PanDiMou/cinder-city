@@ -12,6 +12,13 @@ FetchContent_Declare(
         GIT_TAG        release-3.4.12
         GIT_SHALLOW    ON
 )
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        1.0.1
+        GIT_SHALLOW    ON
+)
+FetchContent_MakeAvailable(glm)
 set(SDL_SHARED ON  CACHE BOOL "" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 set(SDL_TEST   OFF CACHE BOOL "" FORCE)
@@ -24,6 +31,8 @@ add_executable(CinderCity
         src/engine/core/platform.cpp
         src/engine/render/graphics_device.cpp
         src/engine/core/log.cpp
+        src/engine/world/ground.cpp
 )
 target_include_directories(CinderCity PRIVATE src)
-target_link_libraries(CinderCity PRIVATE SDL3::SDL3)
+target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm)
+
