@@ -7,6 +7,7 @@
 #include "engine/core/window.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3_shadercross/SDL_shadercross.h>
 #include <stdexcept>
 #include <string>
 
@@ -30,9 +31,16 @@ namespace cinder {
             SDL_DestroyGPUDevice(device_);
             throw std::runtime_error(std::string{"SDL_ClaimWindowForGPUDevice: "} + SDL_GetError());
         }
+
+        if (!SDL_ShaderCross_Init()) {
+            SDL_ReleaseWindowFromGPUDevice(device_, window_);
+            SDL_DestroyGPUDevice(device_);
+            throw std::runtime_error(std::string{"SDL_ShaderCross_Init: "} + SDL_GetError());
+        }
     }
 
     graphics_device::~graphics_device() {
+        SDL_ShaderCross_Quit();
         if (device_ != nullptr) {
             SDL_ReleaseWindowFromGPUDevice(device_, window_);
             SDL_DestroyGPUDevice(device_);

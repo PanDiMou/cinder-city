@@ -24,6 +24,20 @@ set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 set(SDL_TEST   OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(SDL3)
 
+# SDL_shadercross : traduit le SPIR-V vers le format natif (Metal/MSL sur Mac) au runtime.
+FetchContent_Declare(
+        SDL3_shadercross
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
+        GIT_TAG        main
+        GIT_SHALLOW    ON
+)
+set(SDLSHADERCROSS_SHARED   OFF CACHE BOOL "" FORCE)
+set(SDLSHADERCROSS_STATIC   ON  CACHE BOOL "" FORCE)
+set(SDLSHADERCROSS_VENDORED ON  CACHE BOOL "" FORCE)  # embarque SPIRV-Cross
+set(SDLSHADERCROSS_DXC      OFF CACHE BOOL "" FORCE)  # pas de HLSL/DXC : on part du SPIR-V
+set(SDLSHADERCROSS_CLI      OFF CACHE BOOL "" FORCE)  # pas d'outil ligne de commande
+FetchContent_MakeAvailable(SDL3_shadercross)
+
 add_executable(CinderCity
         src/main.cpp
         src/engine/core/window.cpp
@@ -33,7 +47,8 @@ add_executable(CinderCity
         src/engine/core/log.cpp
         src/engine/world/ground.cpp
         src/engine/render/gpu_buffer.cpp
+        src/engine/render/shader.cpp
 )
 target_include_directories(CinderCity PRIVATE src)
-target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm)
+target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm SDL3_shadercross::SDL3_shadercross)
 target_compile_definitions(CinderCity PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
