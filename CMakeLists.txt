@@ -32,6 +32,7 @@ add_executable(CinderCity
         src/engine/render/graphics_device.cpp
         src/engine/core/log.cpp
         src/engine/world/ground.cpp
+        src/engine/render/gpu_buffer.cpp
 )
 target_include_directories(CinderCity PRIVATE src)
 target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm)
