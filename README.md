@@ -49,7 +49,7 @@ C'est un projet au long cours — et il est mené comme tel.
 | 🗺️ **Monde ouvert** | 1 km × 1 km explorables, sans chargement apparent |
 | 🚗 **Conduite libre** | Véhicules et déplacement au cœur de l'expérience |
 | 🏙️ **Ville vivante** | Circulation, piétons et systèmes réactifs simulés en masse |
-| ⚡ **Performance** | Architecture orientée données, pensée pour tenir dans le temps |
+| ⚡ **Performance** | Architecture soignée et C++ moderne, pensés pour tenir dans le temps |
 
 <img src="assets/divider.svg" width="100%" alt="">
 
@@ -63,7 +63,7 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 🪟 Fenêtrage / entrées | ![SDL3](https://img.shields.io/badge/SDL3-1D4ED8?style=flat-square&logoColor=white) | Fenêtres et périphériques |
 | 🎨 Rendu 3D | ![SDL_gpu](https://img.shields.io/badge/SDL__gpu-AC162C?style=flat-square) | Rendu moderne cross-platform (Metal / Vulkan / D3D12) |
 | 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions |
-| 🧩 ECS | ![Flecs](https://img.shields.io/badge/Flecs-6C4AB6?style=flat-square) | Gestion massive des entités (data-oriented) |
+| 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) |
 | 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D |
 | 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage |
 | 🧰 Outils / UI debug | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Interfaces et outils in-engine |
@@ -75,12 +75,16 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 
 | | Étape | Statut |
 | --- | --- | --- |
-| 🟨 | Socle moteur — fenêtre, boucle applicative, architecture | En cours |
+| ✅ | Socle moteur — fenêtre, boucle applicative, logs | Fait |
+| ✅ | Rendu SDL_gpu — device, pipeline, depth buffer | Fait |
+| ✅ | Sol 1 km² + caméra perspective | Fait |
+| ✅ | Architecture entité/monde (game object OOP) | Fait |
+| 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
 
-**Prochaine étape :** 🌍 Monde & caméra — terrain 1 km², caméra libre.
+**Prochaine étape :** 🏙️ Ajouter les premiers objets (bâtiments, véhicules) au monde.
 
 ```
-Progression du socle   [■□□□□□□□□□]  10%
+Progression du socle   [■■■□□□□□□□]  25%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
