@@ -6,11 +6,15 @@
 #include "engine/render/renderer.hpp"
 #include "engine/render/graphics_device.hpp"
 #include "engine/render/shader.hpp"
+#include "engine/render/gpu_mesh.hpp"
 #include "engine/render/mesh.hpp"
 #include "engine/scene/camera.hpp"
+#include "engine/world/world.hpp"
+#include "engine/world/entity.hpp"
 #include "engine/core/log.hpp"
 
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
 
 #include <cstddef>
 #include <stdexcept>
@@ -21,23 +25,13 @@ namespace cinder {
         constexpr auto depth_format {SDL_GPU_TEXTUREFORMAT_D32_FLOAT};
     }
 
-    renderer::renderer(const graphics_device& device, const mesh& mesh)
+    renderer::renderer(const graphics_device& device)
         : device_ {device.native()},
-          window_ {device.window_handle()},
-          vertices_{
-              device, mesh.vertices.data(), static_cast<std::uint32_t>(mesh.vertices.size() * sizeof(vertex)),
-              buffer_usage::vertex
-          },
-          indices_{
-              device, mesh.indices.data(), static_cast<std::uint32_t>(mesh.indices.size() * sizeof(std::uint32_t)),
-              buffer_usage::index
-          },
-          index_count_ {static_cast<std::uint32_t>(mesh.indices.size())} {
+          window_ {device.window_handle()} {
 
         const shader vertex_shader {device, "shaders/ground.vert.spv", shader_stage::vertex};
         const shader fragment_shader {device, "shaders/ground.frag.spv", shader_stage::fragment};
 
-        // How to read a vertex buffer: one buffer, one attribute (position at location 0).
         constexpr SDL_GPUVertexBufferDescription vertex_buffer {
             .slot = 0,
             .pitch = sizeof(vertex),
@@ -79,7 +73,6 @@ namespace cinder {
             throw std::runtime_error(std::string{"SDL_CreateGPUGraphicsPipeline: "} + SDL_GetError());
         }
 
-        // Depth buffer, sized to the window (fullscreen: fixed size for now).
         int width {0};
         int height {0};
         SDL_GetWindowSizeInPixels(window_, &width, &height);
@@ -110,7 +103,7 @@ namespace cinder {
         }
     }
 
-    void renderer::draw(const camera& camera) const {
+    void renderer::draw(const camera& camera, const world& world) const {
         SDL_GPUCommandBuffer* command_buffer {SDL_AcquireGPUCommandBuffer(device_)};
         if (command_buffer == nullptr) {
             log::error("SDL_AcquireGPUCommandBuffer: {}", SDL_GetError());
@@ -146,16 +139,14 @@ namespace cinder {
         depth.store_op = SDL_GPU_STOREOP_DONT_CARE;
 
         SDL_GPURenderPass* pass {SDL_BeginGPURenderPass(command_buffer, &color, 1, &depth)};
-
         SDL_BindGPUGraphicsPipeline(pass, pipeline_);
 
-        const SDL_GPUBufferBinding vertex_binding {.buffer = vertices_.native(), .offset = 0};
-        SDL_BindGPUVertexBuffers(pass, 0, &vertex_binding, 1);
-        const SDL_GPUBufferBinding index_binding {.buffer = indices_.native(), .offset = 0};
-        SDL_BindGPUIndexBuffer(pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &view_projection, sizeof(view_projection));
-        SDL_DrawGPUIndexedPrimitives(pass, index_count_, 1, 0, 0, 0);
+        // One draw per entity: MVP = view-projection x its model matrix.
+        for (const auto& entity : world.entities()) {
+            const glm::mat4 model_view_projection {view_projection * entity->get_transform().matrix()};
+            SDL_PushGPUVertexUniformData(command_buffer, 0, &model_view_projection, sizeof(model_view_projection));
+            entity->mesh().bind_and_draw(pass);
+        }
 
         SDL_EndGPURenderPass(pass);
         SDL_SubmitGPUCommandBuffer(command_buffer);

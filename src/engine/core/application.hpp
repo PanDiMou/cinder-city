@@ -10,13 +10,15 @@
 #include "engine/core/window.hpp"
 #include "engine/render/graphics_device.hpp"
 #include "engine/render/renderer.hpp"
+#include "engine/render/gpu_mesh.hpp"
 #include "engine/scene/camera.hpp"
 #include "engine/world/ground.hpp"
+#include "engine/world/world.hpp"
 
 namespace cinder {
     class application {
     public:
-        application() = default;
+        application();
         application(const application&) = delete;
         application& operator=(const application&) = delete;
 
@@ -28,8 +30,10 @@ namespace cinder {
         platform        platform_;
         window          window_;
         graphics_device graphics_device_ {window_};
+        renderer        renderer_ {graphics_device_};
         ground          ground_;
-        renderer        renderer_ {graphics_device_, ground_.geometry()};
+        gpu_mesh        ground_mesh_ {graphics_device_, ground_.geometry()};
+        world           world_;
         camera          camera_;
         bool            running_ {true};
     };

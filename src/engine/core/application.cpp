@@ -4,13 +4,25 @@
 // See LICENSE at the repository root.
 
 #include "application.hpp"
+#include "engine/world/static_prop.hpp"
+#include "engine/scene/transform.hpp"
 
 #include <SDL3/SDL.h>
 
 namespace cinder {
+    application::application() {
+        // The ground becomes the first entity of the world, placed at the origin.
+        world_.spawn<static_prop>(ground_mesh_, transform {});
+    }
+
     void application::run() {
+        Uint64 last {SDL_GetTicksNS()};
         while (running_) {
+            const Uint64 now {SDL_GetTicksNS()};
+            const float delta {static_cast<float>(now - last) / 1'000'000'000.0f};
+            last = now;
             process_events();
+            world_.update(delta);
             render();
         }
     }
@@ -26,6 +38,6 @@ namespace cinder {
     }
 
     void application::render() const {
-        renderer_.draw(camera_);
+        renderer_.draw(camera_, world_);
     }
 }
