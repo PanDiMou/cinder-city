@@ -48,6 +48,7 @@ add_executable(CinderCity
         src/engine/world/ground.cpp
         src/engine/render/gpu_buffer.cpp
         src/engine/render/shader.cpp
+        src/engine/render/renderer.cpp
 )
 target_include_directories(CinderCity PRIVATE src)
 target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm SDL3_shadercross::SDL3_shadercross)

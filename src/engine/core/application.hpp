@@ -9,6 +9,9 @@
 #include "engine/core/platform.hpp"
 #include "engine/core/window.hpp"
 #include "engine/render/graphics_device.hpp"
+#include "engine/render/renderer.hpp"
+#include "engine/scene/camera.hpp"
+#include "engine/world/ground.hpp"
 
 namespace cinder {
     class application {
@@ -25,6 +28,9 @@ namespace cinder {
         platform        platform_;
         window          window_;
         graphics_device graphics_device_ {window_};
+        ground          ground_;
+        renderer        renderer_ {graphics_device_, ground_.geometry()};
+        camera          camera_;
         bool            running_ {true};
     };
 }

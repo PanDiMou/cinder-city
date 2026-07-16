@@ -13,12 +13,9 @@ namespace cinder {
     // Perspective camera. Produces the view-projection matrix sent to the shader.
     class camera {
     public:
-        void set_aspect(const float aspect) noexcept { aspect_ = aspect; }
-
-        [[nodiscard]] glm::mat4 view_projection() const {
+        [[nodiscard]] glm::mat4 view_projection(const float aspect) const {
             const glm::mat4 view {glm::lookAt(eye_, target_, up_)};
-            glm::mat4 projection {glm::perspective(fov_, aspect_, near_, far_)};
-            projection[1][1] *= -1.0f; // SDL_gpu clip space: flip Y
+            glm::mat4 projection {glm::perspective(fov_, aspect, near_, far_)};
             return projection * view;
         }
 
@@ -27,10 +24,9 @@ namespace cinder {
         glm::vec3 target_ {0.0f, 0.0f, 0.0f};     // looking at the origin
         glm::vec3 up_     {0.0f, 1.0f, 0.0f};
 
-        float aspect_ {16.0f / 9.0f};
-        float fov_    {glm::radians(60.0f)};
-        float near_   {1.0f};
-        float far_    {5000.0f};
+        float fov_  {glm::radians(60.0f)};
+        float near_ {1.0f};
+        float far_  {5000.0f};
     };
 }
 
