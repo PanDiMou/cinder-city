@@ -56,18 +56,56 @@ C'est un projet au long cours — et il est mené comme tel.
 ## 🛠️ Stack technique
 
 Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
-éprouvées et pérennes.
+éprouvées et pérennes. `✅` = intégré · `🔜` = prévu.
 
-| Domaine | Technologie | Rôle |
-| --- | --- | --- |
-| 🪟 Fenêtrage / entrées | ![SDL3](https://img.shields.io/badge/SDL3-1D4ED8?style=flat-square&logoColor=white) | Fenêtres et périphériques |
-| 🎨 Rendu 3D | ![SDL_gpu](https://img.shields.io/badge/SDL__gpu-AC162C?style=flat-square) | Rendu moderne cross-platform (Metal / Vulkan / D3D12) |
-| 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions |
-| 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) |
-| 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D |
-| 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage |
-| 🧰 Outils / UI debug | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Interfaces et outils in-engine |
-| 📊 Profilage | ![Tracy](https://img.shields.io/badge/Tracy-0E9F6E?style=flat-square) | Analyse des performances en temps réel |
+| Domaine | Technologie | Rôle | Statut |
+| --- | --- | --- | :---: |
+| 🪟 Fenêtrage / entrées | ![SDL3](https://img.shields.io/badge/SDL3-1D4ED8?style=flat-square) | Fenêtres et périphériques | ✅ |
+| 🎨 Rendu 3D | ![SDL_gpu](https://img.shields.io/badge/SDL__gpu-AC162C?style=flat-square) | Rendu moderne cross-platform (Metal / Vulkan / D3D12) | ✅ |
+| 🧬 Shaders | ![shadercross](https://img.shields.io/badge/SDL__shadercross-AC162C?style=flat-square) | Traduction SPIR-V → format natif au runtime | ✅ |
+| 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D (matrices, quaternions) | ✅ |
+| 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
+| 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions | 🔜 |
+| 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage | 🔜 |
+| 🧰 Outils / UI debug | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Interfaces et outils in-engine | 🔜 |
+| 📊 Profilage | ![Tracy](https://img.shields.io/badge/Tracy-0E9F6E?style=flat-square) | Analyse des performances en temps réel | 🔜 |
+
+<img src="assets/divider.svg" width="100%" alt="">
+
+## 🧱 Architecture
+
+Le moteur est découpé en modules à responsabilité unique :
+
+```
+src/engine/
+├── core/     platform (SDL) · window · application · log
+├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · renderer
+├── scene/    camera · transform (position / rotation / échelle)
+└── world/    world · entity · static_prop · ground · cube
+```
+
+<img src="assets/architecture.svg" width="100%" alt="Schéma d'architecture de Cinder City">
+
+**Du data au pixel.** Un objet est d'abord une géométrie (`mesh`, sommets +
+indices), uploadée en VRAM sous forme de `gpu_mesh`. Il est porté par une
+**entité** (un `transform` + une couleur) qui vit dans le **`world`**. Chaque
+frame, le **`renderer`** parcourt le monde et dessine chaque entité avec sa
+matrice caméra et sa couleur — **un seul pipeline** pour tous les objets.
+
+**Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh,
+couleur, `update()`) se spécialise par héritage : `static_prop` pour les objets
+immobiles, bientôt `vehicle`, `pedestrian`… Ajouter un objet au monde tient en
+une ligne :
+
+```cpp
+world_.spawn<static_prop>(cube_mesh_, transform {.position = {0, 0.5f, 0}},
+                          glm::vec4 {1.0f, 0.5f, 0.0f, 1.0f}); // cube orange
+```
+
+**Principes de code.** RAII systématique (chaque ressource GPU possédée et
+libérée par un objet), C++23 (`std::expected`-friendly, concepts, `std::format`),
+séparation nette entre simulation (`world` / `entity`) et rendu (`renderer`) —
+pour rester maintenable et prêt au multijoueur.
 
 <img src="assets/divider.svg" width="100%" alt="">
 
@@ -79,25 +117,41 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | ✅ | Rendu SDL_gpu — device, pipeline, depth buffer | Fait |
 | ✅ | Sol 1 km² + caméra perspective | Fait |
 | ✅ | Architecture entité/monde (game object OOP) | Fait |
+| ✅ | Couleur par entité + premier objet (cube orange) | Fait |
 | 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
+| ⬜ | Caméra libre (déplacement clavier / souris) | À venir |
+| ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🏙️ Ajouter les premiers objets (bâtiments, véhicules) au monde.
+**Prochaine étape :** 🎥 Caméra libre + premiers bâtiments posés sur le sol.
 
 ```
-Progression du socle   [■■■□□□□□□□]  25%
+Progression du socle   [■■■□□□□□□□]  30%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
 
 ## ⚙️ Construction
 
-Projet basé sur **CMake**. Les dépendances sont récupérées et compilées
-automatiquement.
+**Prérequis**
+
+- Un compilateur **C++23** (Clang 17+, GCC 14+, MSVC 19.4+)
+- **CMake ≥ 3.28**
+- **`glslc`** pour compiler les shaders (paquet `shaderc`) — sur macOS : `brew install shaderc`
+
+SDL3, GLM et SDL_shadercross sont récupérés et compilés automatiquement par CMake.
+
+**Compiler les shaders** (GLSL → SPIR-V), puis le projet :
 
 ```bash
+glslc shaders/ground.vert -o shaders/ground.vert.spv
+glslc shaders/ground.frag -o shaders/ground.frag.spv
+
 cmake -S . -B build
 cmake --build build -j
 ```
+
+Lance l'exécutable **depuis la racine du projet** — les shaders `.spv` y sont
+cherchés au chargement.
 
 <img src="assets/divider.svg" width="100%" alt="">
 

@@ -1,0 +1,102 @@
+<svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="Architecture de Cinder City">
+  <title>Architecture de Cinder City — du data au pixel</title>
+  <desc>La boucle application appelle world.update et renderer.draw. Un objet passe de mesh (RAM) à gpu_mesh (VRAM), est porté par une entity dans le world, puis dessiné par le renderer à l'écran.</desc>
+
+  <defs>
+    <style>
+      .card   { fill: #0f1622; stroke: #263143; stroke-width: 1.5; }
+      .box    { fill: #17202e; stroke: #2c3a4f; stroke-width: 1.5; }
+      .loop   { fill: #141d2b; stroke: #2c3a4f; stroke-width: 1.5; }
+      .title  { fill: #e6edf3; font-weight: 700; }
+      .sub    { fill: #8b98a9; }
+      .mut    { fill: #7c8b9e; }
+      .mono   { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .arrow  { stroke: #55647a; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <rect x="6" y="6" width="888" height="458" rx="16" class="card"/>
+
+  <text x="34" y="46" class="title" font-size="19">Architecture — du data au pixel</text>
+  <text x="34" y="68" class="sub" font-size="13">Le trajet d'un objet, rejoué à chaque frame.</text>
+
+  <!-- application loop -->
+  <rect x="34" y="92" width="832" height="66" rx="10" class="loop"/>
+  <circle cx="60" cy="125" r="6" fill="#64748b"/>
+  <text x="76" y="122" class="title" font-size="15">application — boucle de jeu</text>
+  <text x="76" y="142" class="sub mono" font-size="12.5">while (running) { process_events();  world.update(Δt);  renderer.draw(); }</text>
+
+  <!-- arrow down -->
+  <line x1="450" y1="158" x2="450" y2="196" class="arrow"/>
+  <polygon points="450,204 444,192 456,192" fill="#55647a"/>
+
+  <!-- pipeline -->
+  <!-- box 1 : mesh -->
+  <rect x="34" y="224" width="150" height="82" rx="10" class="box"/>
+  <rect x="34" y="224" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
+  <text x="50" y="256" class="title mono" font-size="15">mesh</text>
+  <text x="50" y="278" class="sub" font-size="12">sommets + indices</text>
+  <text x="50" y="294" class="mut" font-size="11">RAM (CPU)</text>
+
+  <!-- box 2 : gpu_mesh -->
+  <rect x="219" y="224" width="150" height="82" rx="10" class="box"/>
+  <rect x="219" y="224" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
+  <text x="235" y="256" class="title mono" font-size="15">gpu_mesh</text>
+  <text x="235" y="278" class="sub" font-size="12">buffers GPU</text>
+  <text x="235" y="294" class="mut" font-size="11">VRAM (GPU)</text>
+
+  <!-- box 3 : entity -->
+  <rect x="404" y="224" width="150" height="82" rx="10" class="box"/>
+  <rect x="404" y="224" width="150" height="5" rx="2.5" fill="#a78bfa"/>
+  <text x="420" y="256" class="title mono" font-size="15">entity</text>
+  <text x="420" y="278" class="sub" font-size="12">transform + couleur</text>
+  <text x="420" y="294" class="mut" font-size="11">dans le world</text>
+
+  <!-- box 4 : renderer -->
+  <rect x="589" y="224" width="150" height="82" rx="10" class="box"/>
+  <rect x="589" y="224" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
+  <text x="605" y="256" class="title mono" font-size="15">renderer</text>
+  <text x="605" y="278" class="sub" font-size="12">un seul pipeline</text>
+  <text x="605" y="294" class="mut" font-size="11">MVP + couleur / objet</text>
+
+  <!-- box 5 : screen -->
+  <rect x="774" y="224" width="92" height="82" rx="10" class="box"/>
+  <rect x="774" y="224" width="92" height="5" rx="2.5" fill="#2ea043"/>
+  <text x="790" y="256" class="title" font-size="15">écran</text>
+  <text x="790" y="278" class="sub" font-size="12">pixels</text>
+
+  <!-- arrows between -->
+  <g>
+    <line x1="184" y1="265" x2="211" y2="265" class="arrow"/><polygon points="219,265 207,259 207,271" fill="#55647a"/>
+    <text x="201" y="216" class="mut" font-size="10.5" text-anchor="middle">upload</text>
+
+    <line x1="369" y1="265" x2="396" y2="265" class="arrow"/><polygon points="404,265 392,259 392,271" fill="#55647a"/>
+    <text x="386" y="216" class="mut" font-size="10.5" text-anchor="middle">porté par</text>
+
+    <line x1="554" y1="265" x2="581" y2="265" class="arrow"/><polygon points="589,265 577,259 577,271" fill="#55647a"/>
+    <text x="571" y="216" class="mut" font-size="10.5" text-anchor="middle">lu depuis world</text>
+
+    <line x1="739" y1="265" x2="766" y2="265" class="arrow"/><polygon points="774,265 762,259 762,271" fill="#55647a"/>
+    <text x="756" y="216" class="mut" font-size="10.5" text-anchor="middle">dessine</text>
+  </g>
+
+  <!-- modules legend -->
+  <text x="34" y="374" class="sub" font-size="13" font-weight="700">Modules</text>
+  <g font-size="12.5">
+    <circle cx="44" cy="402" r="6" fill="#64748b"/>
+    <text x="58" y="406" class="title mono">core</text>
+    <text x="58" y="424" class="mut" font-size="11">platform · window · application · log</text>
+
+    <circle cx="274" cy="402" r="6" fill="#ff7a7a"/>
+    <text x="288" y="406" class="title mono">render</text>
+    <text x="288" y="424" class="mut" font-size="11">device · shader · gpu_mesh · renderer</text>
+
+    <circle cx="524" cy="402" r="6" fill="#4aa3ff"/>
+    <text x="538" y="406" class="title mono">scene</text>
+    <text x="538" y="424" class="mut" font-size="11">camera · transform</text>
+
+    <circle cx="704" cy="402" r="6" fill="#a78bfa"/>
+    <text x="718" y="406" class="title mono">world</text>
+    <text x="718" y="424" class="mut" font-size="11">world · entity · ground · cube</text>
+  </g>
+</svg>
