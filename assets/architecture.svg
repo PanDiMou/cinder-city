@@ -97,6 +97,6 @@
 
     <circle cx="704" cy="402" r="6" fill="#a78bfa"/>
     <text x="718" y="406" class="title mono">world</text>
-    <text x="718" y="424" class="mut" font-size="11">world · entity · ground · cube</text>
+    <text x="718" y="424" class="mut" font-size="11">world · entity · player · ground · cube</text>
   </g>
 </svg>

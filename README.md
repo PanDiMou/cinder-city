@@ -81,7 +81,7 @@ src/engine/
 ├── core/     platform (SDL) · window · application · log
 ├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · renderer
 ├── scene/    camera · transform (position / rotation / échelle)
-└── world/    world · entity · static_prop · ground · cube
+└── world/    world · entity · static_prop · player · ground · cube
 ```
 
 <img src="assets/architecture.svg" width="100%" alt="Schéma d'architecture de Cinder City">
@@ -93,9 +93,9 @@ frame, le **`renderer`** parcourt le monde et dessine chaque entité avec sa
 matrice caméra et sa couleur — **un seul pipeline** pour tous les objets.
 
 **Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh,
-couleur, `update()`) se spécialise par héritage : `static_prop` pour les objets
-immobiles, bientôt `vehicle`, `pedestrian`… Ajouter un objet au monde tient en
-une ligne :
+couleur, `update()`) se spécialise par héritage : `static_prop` (immobile),
+`player` (piloté aux flèches), bientôt `vehicle`, `pedestrian`… Ajouter un objet
+au monde tient en une ligne :
 
 ```cpp
 world_.spawn<static_prop>(cube_mesh_, transform {.position = {0, 0.5f, 0}},
@@ -118,14 +118,15 @@ pour rester maintenable et prêt au multijoueur.
 | ✅ | Sol 1 km² + caméra perspective | Fait |
 | ✅ | Architecture entité/monde (game object OOP) | Fait |
 | ✅ | Couleur par entité + premier objet (cube orange) | Fait |
+| ✅ | Contrôle clavier — déplacer un objet aux flèches | Fait |
 | 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
-| ⬜ | Caméra libre (déplacement clavier / souris) | À venir |
+| ⬜ | Caméra libre / caméra qui suit le joueur | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🎥 Caméra libre + premiers bâtiments posés sur le sol.
+**Prochaine étape :** 🎥 Caméra qui suit le cube, puis premiers bâtiments.
 
 ```
-Progression du socle   [■■■□□□□□□□]  30%
+Progression du socle   [■■■■□□□□□□]  35%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
