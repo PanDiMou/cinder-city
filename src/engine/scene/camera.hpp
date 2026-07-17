@@ -20,8 +20,8 @@ namespace cinder {
         }
 
     private:
-        glm::vec3 eye_    {0.0f, 350.0f, 600.0f}; // high up and pulled back
-        glm::vec3 target_ {0.0f, 0.0f, 0.0f};     // looking at the origin
+        glm::vec3 eye_    {0.0f, 3.0f, 6.0f};      // close, to see the 1 m cube
+        glm::vec3 target_ {0.0f, 0.5f, 0.0f};      // looking at the cube's center
         glm::vec3 up_     {0.0f, 1.0f, 0.0f};
 
         float fov_  {glm::radians(60.0f)};

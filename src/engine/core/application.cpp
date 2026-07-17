@@ -11,8 +11,9 @@
 
 namespace cinder {
     application::application() {
-        // The ground, placed at the origin. Color is now per-entity (green here).
+        // The ground (green) and a 1 m orange cube resting on it at the center.
         world_.spawn<static_prop>(ground_mesh_, transform {}, glm::vec4 {0.23f, 0.44f, 0.24f, 1.0f});
+        world_.spawn<static_prop>(cube_mesh_, transform {.position = {0.0f, 0.5f, 0.0f}}, glm::vec4 {1.0f, 0.5f, 0.0f, 1.0f});
     }
 
     void application::run() {
