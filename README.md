@@ -119,14 +119,15 @@ pour rester maintenable et prêt au multijoueur.
 | ✅ | Architecture entité/monde (game object OOP) | Fait |
 | ✅ | Couleur par entité + premier objet (cube orange) | Fait |
 | ✅ | Contrôle clavier — déplacer un objet aux flèches | Fait |
+| ✅ | Caméra qui suit le joueur (chase cam) | Fait |
 | 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
-| ⬜ | Caméra libre / caméra qui suit le joueur | À venir |
+| ⬜ | Caméra orbitale / relative (souris) | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🎥 Caméra qui suit le cube, puis premiers bâtiments.
+**Prochaine étape :** 🏙️ Poser les premiers bâtiments sur le sol.
 
 ```
-Progression du socle   [■■■■□□□□□□]  35%
+Progression du socle   [■■■■□□□□□□]  40%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
