@@ -14,6 +14,7 @@
 #include "engine/scene/camera.hpp"
 #include "engine/world/cube.hpp"
 #include "engine/world/ground.hpp"
+#include "engine/world/player.hpp"
 #include "engine/world/world.hpp"
 
 namespace cinder {
@@ -38,6 +39,7 @@ namespace cinder {
         gpu_mesh        cube_mesh_ {graphics_device_, cube_.geometry()};
         world           world_;
         camera          camera_;
+        player*         player_ {nullptr};   // owned by world_, kept for the follow camera
         bool            running_ {true};
     };
 }

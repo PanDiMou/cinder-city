@@ -13,6 +13,12 @@ namespace cinder {
     // Perspective camera. Produces the view-projection matrix sent to the shader.
     class camera {
     public:
+        // Places the camera at a fixed offset from the followed point, looking at it.
+        void follow(const glm::vec3& target) {
+            target_ = target;
+            eye_ = target + offset_;
+        }
+
         [[nodiscard]] glm::mat4 view_projection(const float aspect) const {
             const glm::mat4 view {glm::lookAt(eye_, target_, up_)};
             glm::mat4 projection {glm::perspective(fov_, aspect, near_, far_)};
@@ -23,6 +29,7 @@ namespace cinder {
         glm::vec3 eye_    {0.0f, 3.0f, 6.0f};      // close, to see the 1 m cube
         glm::vec3 target_ {0.0f, 0.5f, 0.0f};      // looking at the cube's center
         glm::vec3 up_     {0.0f, 1.0f, 0.0f};
+        glm::vec3 offset_ {0.0f, 3.0f, 6.0f};      // camera position relative to the followed point
 
         float fov_  {glm::radians(60.0f)};
         float near_ {1.0f};

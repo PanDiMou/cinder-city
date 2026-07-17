@@ -14,7 +14,8 @@ namespace cinder {
     application::application() {
         // The ground (green) and a 1 m orange cube resting on it at the center.
         world_.spawn<static_prop>(ground_mesh_, transform {}, glm::vec4 {0.23f, 0.44f, 0.24f, 1.0f});
-        world_.spawn<player>(cube_mesh_, transform {.position = {0.0f, 0.5f, 0.0f}}, glm::vec4 {1.0f, 0.5f, 0.0f, 1.0f});
+        player_ = &world_.spawn<player>(cube_mesh_, transform {.position = {0.0f, 0.5f, 0.0f}},
+                                        glm::vec4 {1.0f, 0.5f, 0.0f, 1.0f});
     }
 
     void application::run() {
@@ -25,6 +26,7 @@ namespace cinder {
             last = now;
             process_events();
             world_.update(delta);
+            camera_.follow(player_->get_transform().position);
             render();
         }
     }
