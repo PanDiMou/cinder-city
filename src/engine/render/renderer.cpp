@@ -145,6 +145,10 @@ namespace cinder {
         for (const auto& entity : world.entities()) {
             const glm::mat4 model_view_projection {view_projection * entity->get_transform().matrix()};
             SDL_PushGPUVertexUniformData(command_buffer, 0, &model_view_projection, sizeof(model_view_projection));
+
+            const glm::vec4 color {entity->color()};
+            SDL_PushGPUFragmentUniformData(command_buffer, 0, &color, sizeof(color));
+
             entity->mesh().bind_and_draw(pass);
         }
 

@@ -1,8 +1,12 @@
 #version 450
 
+// Fragment uniforms: set 3 (SDL_gpu / shadercross convention).
+layout(set = 3, binding = 0) uniform Material {
+    vec4 color;
+};
+
 layout(location = 0) out vec4 out_color;
 
 void main() {
-    // Flat ground color for now (a grid/texture can come later).
-    out_color = vec4(0.23, 0.44, 0.24, 1.0);
+    out_color = color;
 }

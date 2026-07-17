@@ -11,8 +11,8 @@
 
 namespace cinder {
     application::application() {
-        // The ground becomes the first entity of the world, placed at the origin.
-        world_.spawn<static_prop>(ground_mesh_, transform {});
+        // The ground, placed at the origin. Color is now per-entity (green here).
+        world_.spawn<static_prop>(ground_mesh_, transform {}, glm::vec4 {0.23f, 0.44f, 0.24f, 1.0f});
     }
 
     void application::run() {

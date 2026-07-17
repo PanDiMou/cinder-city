@@ -14,7 +14,8 @@ namespace cinder {
     // Base class for everything living in the world: a transform + a shared mesh to draw.
     class entity {
     public:
-        entity(const gpu_mesh &mesh, const transform &transform): transform_{transform}, mesh_{&mesh} { }
+        entity(const gpu_mesh &mesh, const transform &transform, const glm::vec4 &color)
+            : transform_{transform}, mesh_{&mesh}, color_{color} { }
         entity(const entity&) = delete;
         entity& operator=(const entity&) = delete;
 
@@ -25,10 +26,12 @@ namespace cinder {
 
         [[nodiscard]] const transform &get_transform() const noexcept { return transform_; }
         [[nodiscard]] const gpu_mesh &mesh() const noexcept { return *mesh_; }
+        [[nodiscard]] const glm::vec4 &color() const noexcept { return color_; }
     protected:
         transform transform_;
     private:
         const gpu_mesh* mesh_;
+        glm::vec4 color_;
     };
 }
 
