@@ -47,6 +47,7 @@ add_executable(CinderCity
         src/engine/core/log.cpp
         src/engine/world/ground.cpp
         src/engine/world/cube.cpp
+        src/engine/world/player.cpp
         src/engine/render/gpu_buffer.cpp
         src/engine/render/shader.cpp
         src/engine/render/renderer.cpp
