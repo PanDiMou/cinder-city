@@ -5,7 +5,6 @@
 
 #include "application.hpp"
 #include "engine/world/static_prop.hpp"
-#include "engine/world/player.hpp"
 #include "engine/scene/transform.hpp"
 #include "engine/scene/scene_loader.hpp"
 
@@ -13,9 +12,8 @@
 
 namespace cinder {
     application::application() {
-        // The ground (green) and a 1 m orange cube resting on it at the center.
+        // The grid floor.
         world_.spawn<static_prop>(ground_mesh_, transform{}, glm::vec4{0.30f, 0.30f, 0.32f, 1.0f}, material_type::grid_floor);
-        player_ = &world_.spawn<player>(cube_mesh_, transform{.position = {0.0f, 0.5f, 0.0f}}, glm::vec4{1.0f, 0.5f, 0.0f, 1.0f});
 
         // The city itself lives in data, not code: load the placed props from the scene file.
         load_scene("assets/city.json", world_, catalog_);

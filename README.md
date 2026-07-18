@@ -66,10 +66,11 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D (matrices, quaternions) | ✅ |
 | 📦 Import de modèles | ![ufbx](https://img.shields.io/badge/ufbx-6C4AB6?style=flat-square) | Chargement des modèles FBX (mètres, Y-up, UV) | ✅ |
 | 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG) vers la VRAM | ✅ |
+| 🗺️ Scènes (données) | ![JSON](https://img.shields.io/badge/nlohmann/json-3B5998?style=flat-square) | Ville décrite en données (`city.json`), hors du code | ✅ |
 | 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
+| 🧭 Éditeur in-game | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Poser la ville à la souris, sauver la scène | 🔜 |
 | 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions | 🔜 |
 | 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage | 🔜 |
-| 🧰 Outils / UI debug | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Interfaces et outils in-engine | 🔜 |
 | 📊 Profilage | ![Tracy](https://img.shields.io/badge/Tracy-0E9F6E?style=flat-square) | Analyse des performances en temps réel | 🔜 |
 
 <img src="assets/divider.svg" width="100%" alt="">
@@ -82,36 +83,48 @@ Le moteur est découpé en modules à responsabilité unique :
 src/engine/
 ├── core/     platform (SDL) · window · application · log
 ├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · texture · renderer
-├── assets/   fbx_loader (import FBX) · stb_image (décodage PNG)
-├── scene/    camera · transform (position / rotation / échelle)
-└── world/    world · entity · static_prop · player · ground · cube
+├── assets/   fbx_loader (import FBX) · stb_image (décodage PNG) · model_catalog
+├── scene/    camera (vol libre) · transform · scene_loader (city.json)
+└── world/    world · entity · static_prop · ground
 ```
 
 <img src="assets/architecture.svg" width="100%" alt="Schéma d'architecture de Cinder City">
 
 **Du data au pixel.** Un objet est d'abord une géométrie (`mesh`, sommets +
-indices), soit générée à la main (cube, sol), soit **importée d'un fichier FBX**
-via `fbx_loader`. Elle est uploadée en VRAM sous forme de `gpu_mesh`, puis portée
-par une **entité** (un `transform`, une couleur et un **matériau**) qui vit dans
-le **`world`**. Chaque frame, le **`renderer`** parcourt le monde et dessine
-chaque entité en sélectionnant le **pipeline correspondant à son matériau** :
-`solid_color` pour les objets unis, `grid_floor` pour le sol quadrillé, et
-`textured` pour les modèles échantillonnés dans une **palette** (texture Synty).
+indices), soit générée à la main (le sol), soit **importée d'un fichier FBX**
+via `fbx_loader`. Elle est uploadée en VRAM sous forme de `gpu_mesh` — chargée
+**une seule fois** par le `model_catalog` puis partagée par toutes ses instances.
+Chaque géométrie est portée par une **entité** (un `transform`, une couleur et un
+**matériau**) qui vit dans le **`world`**. Chaque frame, le **`renderer`**
+parcourt le monde et dessine chaque entité en sélectionnant le **pipeline
+correspondant à son matériau** : `solid_color` pour les objets unis, `grid_floor`
+pour le sol quadrillé, et `textured` pour les modèles échantillonnés dans une
+**palette** (texture Synty).
 
-**Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh,
-couleur, `update()`) se spécialise par héritage : `static_prop` (immobile),
-`player` (piloté aux flèches), bientôt `vehicle`, `pedestrian`… Ajouter un objet
-au monde tient en une ligne :
+**La ville en données, pas en code.** La disposition de la ville ne vit plus dans
+le C++ : elle est décrite dans un fichier de scène **`city.json`** (une liste
+d'instances `{ modèle, position, rotation, échelle }`) que le `scene_loader` lit
+au démarrage pour peupler le monde. Ajouter ou déplacer un bâtiment se fait en
+éditant ce fichier — **sans recompiler**. C'est la fondation du futur éditeur.
+
+```json
+{ "model": "SM_Bld_Beach_Shop_01", "position": [10, 0, 0], "rotation_y": 90 }
+```
+
+**Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh, couleur,
+matériau, `update()`) se spécialise par héritage : `static_prop` (immobile),
+bientôt `vehicle`, `pedestrian`… Ajouter un objet au monde tient en une ligne :
 
 ```cpp
-world_.spawn<static_prop>(cube_mesh_, transform {.position = {0, 0.5f, 0}},
-                          glm::vec4 {1.0f, 0.5f, 0.0f, 1.0f}); // cube orange
+world_.spawn<static_prop>(catalog_.get("SM_Bld_Beach_Shop_01"),
+                          transform {.position = {10, 0, 0}},
+                          glm::vec4 {1.0f}, material_type::textured);
 ```
 
 **Principes de code.** RAII systématique (chaque ressource GPU possédée et
-libérée par un objet), C++23 (`std::expected`-friendly, concepts, `std::format`),
-séparation nette entre simulation (`world` / `entity`) et rendu (`renderer`) —
-pour rester maintenable et prêt au multijoueur.
+libérée par un objet), C++23 (concepts, `std::format`, designated initializers),
+séparation nette entre données (`city.json`), simulation (`world` / `entity`) et
+rendu (`renderer`) — pour rester maintenable et prêt au multijoueur.
 
 <img src="assets/divider.svg" width="100%" alt="">
 
@@ -123,20 +136,18 @@ pour rester maintenable et prêt au multijoueur.
 | ✅ | Rendu SDL_gpu — device, pipeline, depth buffer | Fait |
 | ✅ | Sol 1 km² + caméra perspective | Fait |
 | ✅ | Architecture entité/monde (game object OOP) | Fait |
-| ✅ | Couleur par entité + premier objet (cube orange) | Fait |
-| ✅ | Contrôle clavier — déplacer un objet aux flèches | Fait |
-| ✅ | Caméra qui suit le joueur (chase cam) | Fait |
-| ✅ | Matériaux par entité + sol gris quadrillé (`solid_color` / `grid_floor`) | Fait |
-| ✅ | Import de modèles FBX (ufbx) + premier bâtiment | Fait |
-| ✅ | Rendu texturé — palette Synty (stb_image, matériau `textured`) | Fait |
-| 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
-| ⬜ | Caméra orbitale / relative (souris) | À venir |
+| ✅ | Matériaux par entité — `solid_color` / `grid_floor` | Fait |
+| ✅ | Import de modèles FBX (ufbx) + rendu texturé (palette Synty) | Fait |
+| ✅ | Ville en données — `city.json` + catalogue de modèles | Fait |
+| ✅ | Caméra libre — vol clavier (ZQSD) + souris | Fait |
+| 🟨 | Éditeur in-game (ImGui) — poser / déplacer / sauver la ville | En cours |
+| ⬜ | Peupler la ville — bâtiments, véhicules, PNJ | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🏙️ Peupler la ville — poser plus de bâtiments sur le sol.
+**Prochaine étape :** 🧭 Un éditeur intégré pour composer la ville à la souris.
 
 ```
-Progression du socle   [■■■■■■□□□□]  55%
+Progression du socle   [■■■■■■□□□□]  60%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
@@ -149,8 +160,8 @@ Progression du socle   [■■■■■■□□□□]  55%
 - **CMake ≥ 3.28**
 - **`glslc`** pour compiler les shaders (paquet `shaderc`) — sur macOS : `brew install shaderc`
 
-SDL3, GLM, SDL_shadercross, ufbx et stb_image sont récupérés et compilés
-automatiquement par CMake.
+SDL3, GLM, SDL_shadercross, ufbx, stb_image et nlohmann/json sont récupérés et
+compilés automatiquement par CMake.
 
 **Compiler les shaders** (GLSL → SPIR-V), puis le projet :
 
@@ -167,7 +178,11 @@ cmake --build build -j
 ```
 
 Lance l'exécutable **depuis la racine du projet** — les shaders `.spv` ainsi que
-les modèles et textures du dossier `assets/` y sont cherchés au chargement.
+la scène, les modèles et les textures du dossier `assets/` y sont cherchés au
+chargement.
+
+**Contrôles (caméra libre) :** `ZQSD` pour se déplacer, la souris pour regarder,
+`Espace` / `Shift` pour monter / descendre, `Échap` pour quitter.
 
 <img src="assets/divider.svg" width="100%" alt="">
 

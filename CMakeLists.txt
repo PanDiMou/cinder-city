@@ -93,8 +93,6 @@ add_executable(CinderCity
         src/engine/render/texture.cpp
         src/engine/render/renderer.cpp
         src/engine/world/ground.cpp
-        src/engine/world/cube.cpp
-        src/engine/world/player.cpp
         src/engine/assets/fbx_loader.cpp
         src/engine/assets/stb_image_impl.cpp
         src/engine/assets/model_catalog.cpp

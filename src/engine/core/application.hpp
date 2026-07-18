@@ -13,9 +13,7 @@
 #include "engine/render/gpu_mesh.hpp"
 #include "engine/assets/model_catalog.hpp"
 #include "engine/scene/camera.hpp"
-#include "engine/world/cube.hpp"
 #include "engine/world/ground.hpp"
-#include "engine/world/player.hpp"
 #include "engine/world/world.hpp"
 
 namespace cinder {
@@ -37,12 +35,9 @@ namespace cinder {
         renderer        renderer_ {graphics_device_};
         ground          ground_;
         gpu_mesh        ground_mesh_ {graphics_device_, ground_.geometry()};
-        cube            cube_;
-        gpu_mesh        cube_mesh_ {graphics_device_, cube_.geometry()};
         model_catalog   catalog_ {graphics_device_};   // loads FBX models once, on demand
         world           world_;
         camera          camera_;
-        player*         player_ {nullptr};   // owned by world_, kept for the follow camera
         bool            running_ {true};
     };
 }
