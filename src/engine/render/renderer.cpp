@@ -29,9 +29,6 @@ namespace cinder {
         : device_ {device.native()},
           window_ {device.window_handle()} {
 
-        const shader vertex_shader {device, "shaders/ground.vert.spv", shader_stage::vertex};
-        const shader fragment_shader {device, "shaders/ground.frag.spv", shader_stage::fragment};
-
         constexpr SDL_GPUVertexBufferDescription vertex_buffer {
             .slot = 0,
             .pitch = sizeof(vertex),
@@ -44,35 +41,45 @@ namespace cinder {
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
             .offset = offsetof(vertex, position)
         };
-
         const SDL_GPUColorTargetDescription color_target {
             .format = SDL_GetGPUSwapchainTextureFormat(device_, window_)
         };
 
-        SDL_GPUGraphicsPipelineCreateInfo pipeline_info {};
-        pipeline_info.vertex_shader = vertex_shader.native();
-        pipeline_info.fragment_shader = fragment_shader.native();
-        pipeline_info.vertex_input_state.vertex_buffer_descriptions = &vertex_buffer;
-        pipeline_info.vertex_input_state.num_vertex_buffers = 1;
-        pipeline_info.vertex_input_state.vertex_attributes = &position_attribute;
-        pipeline_info.vertex_input_state.num_vertex_attributes = 1;
-        pipeline_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-        pipeline_info.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
-        pipeline_info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
-        pipeline_info.rasterizer_state.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
-        pipeline_info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_LESS;
-        pipeline_info.depth_stencil_state.enable_depth_test = true;
-        pipeline_info.depth_stencil_state.enable_depth_write = true;
-        pipeline_info.target_info.color_target_descriptions = &color_target;
-        pipeline_info.target_info.num_color_targets = 1;
-        pipeline_info.target_info.depth_stencil_format = depth_format;
-        pipeline_info.target_info.has_depth_stencil_target = true;
+        // Builds a pipeline from a vertex + fragment shader; everything else is shared.
+        const auto make_pipeline = [&](const char* vertex_path, const char* fragment_path) {
+            const shader vertex_shader {device, vertex_path, shader_stage::vertex};
+            const shader fragment_shader {device, fragment_path, shader_stage::fragment};
 
-        pipeline_ = SDL_CreateGPUGraphicsPipeline(device_, &pipeline_info);
-        if (pipeline_ == nullptr) {
-            throw std::runtime_error(std::string{"SDL_CreateGPUGraphicsPipeline: "} + SDL_GetError());
-        }
+            SDL_GPUGraphicsPipelineCreateInfo info {};
+            info.vertex_shader = vertex_shader.native();
+            info.fragment_shader = fragment_shader.native();
+            info.vertex_input_state.vertex_buffer_descriptions = &vertex_buffer;
+            info.vertex_input_state.num_vertex_buffers = 1;
+            info.vertex_input_state.vertex_attributes = &position_attribute;
+            info.vertex_input_state.num_vertex_attributes = 1;
+            info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+            info.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
+            info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
+            info.rasterizer_state.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
+            info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_LESS;
+            info.depth_stencil_state.enable_depth_test = true;
+            info.depth_stencil_state.enable_depth_write = true;
+            info.target_info.color_target_descriptions = &color_target;
+            info.target_info.num_color_targets = 1;
+            info.target_info.depth_stencil_format = depth_format;
+            info.target_info.has_depth_stencil_target = true;
 
+            SDL_GPUGraphicsPipeline* pipeline {SDL_CreateGPUGraphicsPipeline(device_, &info)};
+            if (pipeline == nullptr) {
+                throw std::runtime_error(std::string{"SDL_CreateGPUGraphicsPipeline: "} + SDL_GetError());
+            }
+            return pipeline;
+        };
+
+        solid_color_pipeline_ = make_pipeline("shaders/solid_color.vert.spv", "shaders/solid_color.frag.spv");
+        grid_floor_pipeline_ = make_pipeline("shaders/grid_floor.vert.spv", "shaders/grid_floor.frag.spv");
+
+        // Depth buffer, sized to the window (fullscreen: fixed size for now).
         int width {0};
         int height {0};
         SDL_GetWindowSizeInPixels(window_, &width, &height);
@@ -89,7 +96,8 @@ namespace cinder {
 
         depth_ = SDL_CreateGPUTexture(device_, &depth_info);
         if (depth_ == nullptr) {
-            SDL_ReleaseGPUGraphicsPipeline(device_, pipeline_);
+            SDL_ReleaseGPUGraphicsPipeline(device_, grid_floor_pipeline_);
+            SDL_ReleaseGPUGraphicsPipeline(device_, solid_color_pipeline_);
             throw std::runtime_error(std::string{"SDL_CreateGPUTexture (depth): "} + SDL_GetError());
         }
     }
@@ -98,8 +106,11 @@ namespace cinder {
         if (depth_ != nullptr) {
             SDL_ReleaseGPUTexture(device_, depth_);
         }
-        if (pipeline_ != nullptr) {
-            SDL_ReleaseGPUGraphicsPipeline(device_, pipeline_);
+        if (grid_floor_pipeline_ != nullptr) {
+            SDL_ReleaseGPUGraphicsPipeline(device_, grid_floor_pipeline_);
+        }
+        if (solid_color_pipeline_ != nullptr) {
+            SDL_ReleaseGPUGraphicsPipeline(device_, solid_color_pipeline_);
         }
     }
 
@@ -139,15 +150,17 @@ namespace cinder {
         depth.store_op = SDL_GPU_STOREOP_DONT_CARE;
 
         SDL_GPURenderPass* pass {SDL_BeginGPURenderPass(command_buffer, &color, 1, &depth)};
-        SDL_BindGPUGraphicsPipeline(pass, pipeline_);
 
-        // One draw per entity: MVP = view-projection x its model matrix.
+        // One draw per entity, with the pipeline matching its material.
         for (const auto& entity : world.entities()) {
+            SDL_BindGPUGraphicsPipeline(pass,
+                entity->material() == material_type::grid_floor ? grid_floor_pipeline_ : solid_color_pipeline_);
+
             const glm::mat4 model_view_projection {view_projection * entity->get_transform().matrix()};
             SDL_PushGPUVertexUniformData(command_buffer, 0, &model_view_projection, sizeof(model_view_projection));
 
-            const glm::vec4 color {entity->color()};
-            SDL_PushGPUFragmentUniformData(command_buffer, 0, &color, sizeof(color));
+            const glm::vec4 color_uniform {entity->color()};
+            SDL_PushGPUFragmentUniformData(command_buffer, 0, &color_uniform, sizeof(color_uniform));
 
             entity->mesh().bind_and_draw(pass);
         }

@@ -11,11 +11,17 @@
 namespace cinder {
     class gpu_mesh;
 
+    // Which shader/pipeline draws the entity.
+    enum class material_type {
+        solid_color, // solid color, no lighting
+        grid_floor   // gray floor with a procedural grid
+    };
+
     // Base class for everything living in the world: a transform + a shared mesh to draw.
     class entity {
     public:
-        entity(const gpu_mesh &mesh, const transform &transform, const glm::vec4 &color)
-            : transform_{transform}, mesh_{&mesh}, color_{color} { }
+        entity(const gpu_mesh &mesh, const transform &transform, const glm::vec4 &color, const material_type material = material_type::solid_color)
+            : transform_{transform}, mesh_{&mesh}, color_{color}, material_{material} { }
         entity(const entity&) = delete;
         entity& operator=(const entity&) = delete;
 
@@ -27,11 +33,13 @@ namespace cinder {
         [[nodiscard]] const transform &get_transform() const noexcept { return transform_; }
         [[nodiscard]] const gpu_mesh &mesh() const noexcept { return *mesh_; }
         [[nodiscard]] const glm::vec4 &color() const noexcept { return color_; }
+        [[nodiscard]] material_type material() const noexcept { return material_; }
     protected:
         transform transform_;
     private:
         const gpu_mesh* mesh_;
         glm::vec4 color_;
+        material_type material_;
     };
 }
 
