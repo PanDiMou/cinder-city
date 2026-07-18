@@ -88,9 +88,11 @@ src/engine/
 
 **Du data au pixel.** Un objet est d'abord une géométrie (`mesh`, sommets +
 indices), uploadée en VRAM sous forme de `gpu_mesh`. Il est porté par une
-**entité** (un `transform` + une couleur) qui vit dans le **`world`**. Chaque
-frame, le **`renderer`** parcourt le monde et dessine chaque entité avec sa
-matrice caméra et sa couleur — **un seul pipeline** pour tous les objets.
+**entité** (un `transform`, une couleur et un **matériau**) qui vit dans le
+**`world`**. Chaque frame, le **`renderer`** parcourt le monde et dessine chaque
+entité avec sa matrice caméra et sa couleur, en sélectionnant le **pipeline
+correspondant à son matériau** (`solid_color` pour les objets, `grid_floor` pour
+le sol quadrillé).
 
 **Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh,
 couleur, `update()`) se spécialise par héritage : `static_prop` (immobile),
@@ -120,6 +122,7 @@ pour rester maintenable et prêt au multijoueur.
 | ✅ | Couleur par entité + premier objet (cube orange) | Fait |
 | ✅ | Contrôle clavier — déplacer un objet aux flèches | Fait |
 | ✅ | Caméra qui suit le joueur (chase cam) | Fait |
+| ✅ | Matériaux par entité + sol gris quadrillé (`solid_color` / `grid_floor`) | Fait |
 | 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
 | ⬜ | Caméra orbitale / relative (souris) | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
@@ -127,7 +130,7 @@ pour rester maintenable et prêt au multijoueur.
 **Prochaine étape :** 🏙️ Poser les premiers bâtiments sur le sol.
 
 ```
-Progression du socle   [■■■■□□□□□□]  40%
+Progression du socle   [■■■■■□□□□□]  45%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
@@ -145,8 +148,10 @@ SDL3, GLM et SDL_shadercross sont récupérés et compilés automatiquement par 
 **Compiler les shaders** (GLSL → SPIR-V), puis le projet :
 
 ```bash
-glslc shaders/ground.vert -o shaders/ground.vert.spv
-glslc shaders/ground.frag -o shaders/ground.frag.spv
+glslc shaders/solid_color.vert -o shaders/solid_color.vert.spv
+glslc shaders/solid_color.frag -o shaders/solid_color.frag.spv
+glslc shaders/grid_floor.vert  -o shaders/grid_floor.vert.spv
+glslc shaders/grid_floor.frag  -o shaders/grid_floor.frag.spv
 
 cmake -S . -B build
 cmake --build build -j
