@@ -55,11 +55,19 @@ namespace cinder {
                     const ufbx_vec3 local {ufbx_get_vertex_vec3(&part->vertex_position, index)};
                     const ufbx_vec3 world {ufbx_transform_position(&node->geometry_to_world, local)};
 
+                    // UVs point to a color cell in the palette texture (0 if the mesh has none).
+                    const ufbx_vec2 uv {part->vertex_uv.exists
+                        ? ufbx_get_vertex_vec2(&part->vertex_uv, index)
+                        : ufbx_vec2{0.0, 0.0}};
+
                     out.indices.push_back(static_cast<std::uint32_t>(out.vertices.size()));
                     out.vertices.push_back(vertex {
                         .position = {static_cast<float>(world.x),
                                      static_cast<float>(world.y),
-                                     static_cast<float>(world.z)}
+                                     static_cast<float>(world.z)},
+                        // Flip V: FBX UVs start bottom-left, our textures sample top-left.
+                        .uv = {static_cast<float>(uv.x),
+                               1.0f - static_cast<float>(uv.y)}
                     });
                 }
             }

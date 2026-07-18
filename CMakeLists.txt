@@ -59,6 +59,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(ufbx)
 
+# stb: single-header image loader (used to decode PNG textures).
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+        GIT_TAG        master
+)
+FetchContent_MakeAvailable(stb)
+
 # ---------------------------------------------------------------------------
 # Executable
 # ---------------------------------------------------------------------------
@@ -72,11 +80,13 @@ add_executable(CinderCity
         src/engine/render/gpu_buffer.cpp
         src/engine/render/gpu_mesh.cpp
         src/engine/render/shader.cpp
+        src/engine/render/texture.cpp
         src/engine/render/renderer.cpp
         src/engine/world/ground.cpp
         src/engine/world/cube.cpp
         src/engine/world/player.cpp
         src/engine/assets/fbx_loader.cpp
+        src/engine/assets/stb_image_impl.cpp
 )
 
 # Include from the source root so headers use full "engine/..." paths.
@@ -89,3 +99,6 @@ target_compile_definitions(CinderCity PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
 # ufbx has no CMake target: compile its single source into ours directly.
 target_sources(CinderCity PRIVATE ${ufbx_SOURCE_DIR}/ufbx.c)
 target_include_directories(CinderCity PRIVATE ${ufbx_SOURCE_DIR})
+
+# stb is header-only: expose its headers (the implementation lives in stb_image_impl.cpp).
+target_include_directories(CinderCity PRIVATE ${stb_SOURCE_DIR})

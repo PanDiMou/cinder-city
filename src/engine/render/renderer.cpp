@@ -27,7 +27,8 @@ namespace cinder {
 
     renderer::renderer(const graphics_device& device)
         : device_ {device.native()},
-          window_ {device.window_handle()} {
+          window_ {device.window_handle()},
+          palette_ {device, "assets/textures/PolygonPalmCity_01_A.png"} {
 
         constexpr SDL_GPUVertexBufferDescription vertex_buffer {
             .slot = 0,
@@ -35,11 +36,19 @@ namespace cinder {
             .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
             .instance_step_rate = 0
         };
-        constexpr SDL_GPUVertexAttribute position_attribute {
-            .location = 0,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-            .offset = offsetof(vertex, position)
+        constexpr SDL_GPUVertexAttribute vertex_attributes[] {
+            {   // location 0: position (vec3)
+                .location = 0,
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                .offset = offsetof(vertex, position)
+            },
+            {   // location 1: texture coordinates (vec2)
+                .location = 1,
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                .offset = offsetof(vertex, uv)
+            }
         };
         const SDL_GPUColorTargetDescription color_target {
             .format = SDL_GetGPUSwapchainTextureFormat(device_, window_)
@@ -55,8 +64,8 @@ namespace cinder {
             info.fragment_shader = fragment_shader.native();
             info.vertex_input_state.vertex_buffer_descriptions = &vertex_buffer;
             info.vertex_input_state.num_vertex_buffers = 1;
-            info.vertex_input_state.vertex_attributes = &position_attribute;
-            info.vertex_input_state.num_vertex_attributes = 1;
+            info.vertex_input_state.vertex_attributes = vertex_attributes;
+            info.vertex_input_state.num_vertex_attributes = 2;
             info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
             info.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
             info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
@@ -78,6 +87,7 @@ namespace cinder {
 
         solid_color_pipeline_ = make_pipeline("shaders/solid_color.vert.spv", "shaders/solid_color.frag.spv");
         grid_floor_pipeline_ = make_pipeline("shaders/grid_floor.vert.spv", "shaders/grid_floor.frag.spv");
+        textured_pipeline_ = make_pipeline("shaders/textured.vert.spv", "shaders/textured.frag.spv");
 
         // Depth buffer, sized to the window (fullscreen: fixed size for now).
         int width {0};
@@ -96,6 +106,7 @@ namespace cinder {
 
         depth_ = SDL_CreateGPUTexture(device_, &depth_info);
         if (depth_ == nullptr) {
+            SDL_ReleaseGPUGraphicsPipeline(device_, textured_pipeline_);
             SDL_ReleaseGPUGraphicsPipeline(device_, grid_floor_pipeline_);
             SDL_ReleaseGPUGraphicsPipeline(device_, solid_color_pipeline_);
             throw std::runtime_error(std::string{"SDL_CreateGPUTexture (depth): "} + SDL_GetError());
@@ -105,6 +116,9 @@ namespace cinder {
     renderer::~renderer() {
         if (depth_ != nullptr) {
             SDL_ReleaseGPUTexture(device_, depth_);
+        }
+        if (textured_pipeline_ != nullptr) {
+            SDL_ReleaseGPUGraphicsPipeline(device_, textured_pipeline_);
         }
         if (grid_floor_pipeline_ != nullptr) {
             SDL_ReleaseGPUGraphicsPipeline(device_, grid_floor_pipeline_);
@@ -153,14 +167,31 @@ namespace cinder {
 
         // One draw per entity, with the pipeline matching its material.
         for (const auto& entity : world.entities()) {
-            SDL_BindGPUGraphicsPipeline(pass,
-                entity->material() == material_type::grid_floor ? grid_floor_pipeline_ : solid_color_pipeline_);
+            const material_type material {entity->material()};
+
+            SDL_GPUGraphicsPipeline* pipeline {solid_color_pipeline_};
+            switch (material) {
+                case material_type::grid_floor:  pipeline = grid_floor_pipeline_; break;
+                case material_type::textured:    pipeline = textured_pipeline_;   break;
+                case material_type::solid_color: break;
+            }
+            SDL_BindGPUGraphicsPipeline(pass, pipeline);
 
             const glm::mat4 model_view_projection {view_projection * entity->get_transform().matrix()};
             SDL_PushGPUVertexUniformData(command_buffer, 0, &model_view_projection, sizeof(model_view_projection));
 
-            const glm::vec4 color_uniform {entity->color()};
-            SDL_PushGPUFragmentUniformData(command_buffer, 0, &color_uniform, sizeof(color_uniform));
+            if (material == material_type::textured) {
+                // Bind the palette texture + sampler (fragment slot 0, shadercross set = 2).
+                const SDL_GPUTextureSamplerBinding binding {
+                    .texture = palette_.native(),
+                    .sampler = palette_.sampler()
+                };
+                SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
+            } else {
+                // solid_color and grid_floor read a color uniform (fragment slot 0).
+                const glm::vec4 color_uniform {entity->color()};
+                SDL_PushGPUFragmentUniformData(command_buffer, 0, &color_uniform, sizeof(color_uniform));
+            }
 
             entity->mesh().bind_and_draw(pass);
         }

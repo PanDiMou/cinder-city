@@ -34,3 +34,6 @@
 .idea
 *.spv
 /assets/models/
+/assets/textures/
+
+.DS_Store

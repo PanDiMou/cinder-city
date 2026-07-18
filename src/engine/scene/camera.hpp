@@ -29,7 +29,7 @@ namespace cinder {
         glm::vec3 eye_    {0.0f, 3.0f, 6.0f};      // close, to see the 1 m cube
         glm::vec3 target_ {0.0f, 0.5f, 0.0f};      // looking at the cube's center
         glm::vec3 up_     {0.0f, 1.0f, 0.0f};
-        glm::vec3 offset_ {0.0f, 3.0f, 6.0f};      // camera position relative to the followed point
+        glm::vec3 offset_ {0.0f, 4.0f, 16.0f};      // camera position relative to the followed point
 
         float fov_  {glm::radians(60.0f)};
         float near_ {1.0f};

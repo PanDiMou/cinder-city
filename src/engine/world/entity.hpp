@@ -14,7 +14,8 @@ namespace cinder {
     // Which shader/pipeline draws the entity.
     enum class material_type {
         solid_color, // solid color, no lighting
-        grid_floor   // gray floor with a procedural grid
+        grid_floor,  // gray floor with a procedural grid
+        textured     // sampled from the palette texture (imported models)
     };
 
     // Base class for everything living in the world: a transform + a shared mesh to draw.

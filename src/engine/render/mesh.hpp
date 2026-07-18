@@ -12,6 +12,7 @@
 namespace cinder {
     struct vertex {
         glm::vec3 position;
+        glm::vec2 uv;
     };
 
     struct mesh {

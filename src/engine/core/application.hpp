@@ -38,7 +38,7 @@ namespace cinder {
         gpu_mesh        ground_mesh_ {graphics_device_, ground_.geometry()};
         cube            cube_;
         gpu_mesh        cube_mesh_ {graphics_device_, cube_.geometry()};
-        gpu_mesh        building_mesh_ {graphics_device_, load_fbx("assets/models/SM_Gen_Bld_Background_05.fbx")};
+        gpu_mesh        building_mesh_ {graphics_device_, load_fbx("assets/models/SM_Bld_Beach_Shop_01.fbx")};
         world           world_;
         camera          camera_;
         player*         player_ {nullptr};   // owned by world_, kept for the follow camera
