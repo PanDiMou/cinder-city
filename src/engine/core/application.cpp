@@ -14,6 +14,7 @@ namespace cinder {
     application::application() {
         // The ground (green) and a 1 m orange cube resting on it at the center.
         world_.spawn<static_prop>(ground_mesh_, transform{}, glm::vec4{0.30f, 0.30f, 0.32f, 1.0f}, material_type::grid_floor);
+        world_.spawn<static_prop>(building_mesh_, transform{.position = {10.0f, 0.0f, 0.0f}}, glm::vec4{0.72f, 0.72f, 0.75f, 1.0f});
         player_ = &world_.spawn<player>(cube_mesh_, transform{.position = {0.0f, 0.5f, 0.0f}}, glm::vec4{1.0f, 0.5f, 0.0f, 1.0f});
     }
 

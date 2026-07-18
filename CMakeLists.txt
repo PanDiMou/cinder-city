@@ -1,17 +1,27 @@
 cmake_minimum_required(VERSION 3.28)
-project(CinderCity LANGUAGES CXX)
 
+# C is needed alongside C++ because ufbx ships as a single C source file.
+project(CinderCity LANGUAGES C CXX)
+
+# Language standard: strict C++23, no compiler-specific extensions.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ---------------------------------------------------------------------------
+# Dependencies (fetched and built from source, pinned to fixed versions).
+# ---------------------------------------------------------------------------
 include(FetchContent)
+
+# SDL3: windowing, input and the GPU rendering API.
 FetchContent_Declare(
         SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG        release-3.4.12
         GIT_SHALLOW    ON
 )
+
+# GLM: header-only linear algebra (matrices, quaternions).
 FetchContent_Declare(
         glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
@@ -19,12 +29,14 @@ FetchContent_Declare(
         GIT_SHALLOW    ON
 )
 FetchContent_MakeAvailable(glm)
+
+# Build SDL3 as a shared library only, without its test suite.
 set(SDL_SHARED ON  CACHE BOOL "" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 set(SDL_TEST   OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(SDL3)
 
-# SDL_shadercross : traduit le SPIR-V vers le format natif (Metal/MSL sur Mac) au runtime.
+# SDL_shadercross: translates SPIR-V to the native format (Metal/MSL on Mac) at runtime.
 FetchContent_Declare(
         SDL3_shadercross
         GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
@@ -33,26 +45,47 @@ FetchContent_Declare(
 )
 set(SDLSHADERCROSS_SHARED   OFF CACHE BOOL "" FORCE)
 set(SDLSHADERCROSS_STATIC   ON  CACHE BOOL "" FORCE)
-set(SDLSHADERCROSS_VENDORED ON  CACHE BOOL "" FORCE)  # embarque SPIRV-Cross
-set(SDLSHADERCROSS_DXC      OFF CACHE BOOL "" FORCE)  # pas de HLSL/DXC : on part du SPIR-V
-set(SDLSHADERCROSS_CLI      OFF CACHE BOOL "" FORCE)  # pas d'outil ligne de commande
+set(SDLSHADERCROSS_VENDORED ON  CACHE BOOL "" FORCE)  # bundle SPIRV-Cross
+set(SDLSHADERCROSS_DXC      OFF CACHE BOOL "" FORCE)  # no HLSL/DXC: we start from SPIR-V
+set(SDLSHADERCROSS_CLI      OFF CACHE BOOL "" FORCE)  # no command-line tool
 FetchContent_MakeAvailable(SDL3_shadercross)
 
+# ufbx: single-source FBX loader (used to import 3D models).
+FetchContent_Declare(
+        ufbx
+        GIT_REPOSITORY https://github.com/ufbx/ufbx.git
+        GIT_TAG        v0.23.0
+        GIT_SHALLOW    ON
+)
+FetchContent_MakeAvailable(ufbx)
+
+# ---------------------------------------------------------------------------
+# Executable
+# ---------------------------------------------------------------------------
 add_executable(CinderCity
         src/main.cpp
         src/engine/core/window.cpp
         src/engine/core/application.cpp
         src/engine/core/platform.cpp
-        src/engine/render/graphics_device.cpp
         src/engine/core/log.cpp
+        src/engine/render/graphics_device.cpp
+        src/engine/render/gpu_buffer.cpp
+        src/engine/render/gpu_mesh.cpp
+        src/engine/render/shader.cpp
+        src/engine/render/renderer.cpp
         src/engine/world/ground.cpp
         src/engine/world/cube.cpp
         src/engine/world/player.cpp
-        src/engine/render/gpu_buffer.cpp
-        src/engine/render/shader.cpp
-        src/engine/render/renderer.cpp
-        src/engine/render/gpu_mesh.cpp
+        src/engine/assets/fbx_loader.cpp
 )
+
+# Include from the source root so headers use full "engine/..." paths.
 target_include_directories(CinderCity PRIVATE src)
 target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm SDL3_shadercross::SDL3_shadercross)
+
+# Match GLM's clip-space depth convention to the GPU backend ([0, 1]).
 target_compile_definitions(CinderCity PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
+
+# ufbx has no CMake target: compile its single source into ours directly.
+target_sources(CinderCity PRIVATE ${ufbx_SOURCE_DIR}/ufbx.c)
+target_include_directories(CinderCity PRIVATE ${ufbx_SOURCE_DIR})
