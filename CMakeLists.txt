@@ -67,6 +67,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
+# nlohmann/json: header-only JSON parser (used for scene files).
+FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.11.3
+        GIT_SHALLOW    ON
+)
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(nlohmann_json)
+
 # ---------------------------------------------------------------------------
 # Executable
 # ---------------------------------------------------------------------------
@@ -87,11 +97,13 @@ add_executable(CinderCity
         src/engine/world/player.cpp
         src/engine/assets/fbx_loader.cpp
         src/engine/assets/stb_image_impl.cpp
+        src/engine/assets/model_catalog.cpp
+        src/engine/scene/scene_loader.cpp
 )
 
 # Include from the source root so headers use full "engine/..." paths.
 target_include_directories(CinderCity PRIVATE src)
-target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm SDL3_shadercross::SDL3_shadercross)
+target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm SDL3_shadercross::SDL3_shadercross nlohmann_json::nlohmann_json)
 
 # Match GLM's clip-space depth convention to the GPU backend ([0, 1]).
 target_compile_definitions(CinderCity PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
