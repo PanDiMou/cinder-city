@@ -64,6 +64,8 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 🎨 Rendu 3D | ![SDL_gpu](https://img.shields.io/badge/SDL__gpu-AC162C?style=flat-square) | Rendu moderne cross-platform (Metal / Vulkan / D3D12) | ✅ |
 | 🧬 Shaders | ![shadercross](https://img.shields.io/badge/SDL__shadercross-AC162C?style=flat-square) | Traduction SPIR-V → format natif au runtime | ✅ |
 | 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D (matrices, quaternions) | ✅ |
+| 📦 Import de modèles | ![ufbx](https://img.shields.io/badge/ufbx-6C4AB6?style=flat-square) | Chargement des modèles FBX (mètres, Y-up, UV) | ✅ |
+| 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG) vers la VRAM | ✅ |
 | 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
 | 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions | 🔜 |
 | 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage | 🔜 |
@@ -79,7 +81,8 @@ Le moteur est découpé en modules à responsabilité unique :
 ```
 src/engine/
 ├── core/     platform (SDL) · window · application · log
-├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · renderer
+├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · texture · renderer
+├── assets/   fbx_loader (import FBX) · stb_image (décodage PNG)
 ├── scene/    camera · transform (position / rotation / échelle)
 └── world/    world · entity · static_prop · player · ground · cube
 ```
@@ -87,12 +90,13 @@ src/engine/
 <img src="assets/architecture.svg" width="100%" alt="Schéma d'architecture de Cinder City">
 
 **Du data au pixel.** Un objet est d'abord une géométrie (`mesh`, sommets +
-indices), uploadée en VRAM sous forme de `gpu_mesh`. Il est porté par une
-**entité** (un `transform`, une couleur et un **matériau**) qui vit dans le
-**`world`**. Chaque frame, le **`renderer`** parcourt le monde et dessine chaque
-entité avec sa matrice caméra et sa couleur, en sélectionnant le **pipeline
-correspondant à son matériau** (`solid_color` pour les objets, `grid_floor` pour
-le sol quadrillé).
+indices), soit générée à la main (cube, sol), soit **importée d'un fichier FBX**
+via `fbx_loader`. Elle est uploadée en VRAM sous forme de `gpu_mesh`, puis portée
+par une **entité** (un `transform`, une couleur et un **matériau**) qui vit dans
+le **`world`**. Chaque frame, le **`renderer`** parcourt le monde et dessine
+chaque entité en sélectionnant le **pipeline correspondant à son matériau** :
+`solid_color` pour les objets unis, `grid_floor` pour le sol quadrillé, et
+`textured` pour les modèles échantillonnés dans une **palette** (texture Synty).
 
 **Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh,
 couleur, `update()`) se spécialise par héritage : `static_prop` (immobile),
@@ -123,14 +127,16 @@ pour rester maintenable et prêt au multijoueur.
 | ✅ | Contrôle clavier — déplacer un objet aux flèches | Fait |
 | ✅ | Caméra qui suit le joueur (chase cam) | Fait |
 | ✅ | Matériaux par entité + sol gris quadrillé (`solid_color` / `grid_floor`) | Fait |
+| ✅ | Import de modèles FBX (ufbx) + premier bâtiment | Fait |
+| ✅ | Rendu texturé — palette Synty (stb_image, matériau `textured`) | Fait |
 | 🟨 | Peupler le monde — bâtiments, véhicules, PNJ | En cours |
 | ⬜ | Caméra orbitale / relative (souris) | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🏙️ Poser les premiers bâtiments sur le sol.
+**Prochaine étape :** 🏙️ Peupler la ville — poser plus de bâtiments sur le sol.
 
 ```
-Progression du socle   [■■■■■□□□□□]  45%
+Progression du socle   [■■■■■■□□□□]  55%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
@@ -143,7 +149,8 @@ Progression du socle   [■■■■■□□□□□]  45%
 - **CMake ≥ 3.28**
 - **`glslc`** pour compiler les shaders (paquet `shaderc`) — sur macOS : `brew install shaderc`
 
-SDL3, GLM et SDL_shadercross sont récupérés et compilés automatiquement par CMake.
+SDL3, GLM, SDL_shadercross, ufbx et stb_image sont récupérés et compilés
+automatiquement par CMake.
 
 **Compiler les shaders** (GLSL → SPIR-V), puis le projet :
 
@@ -152,13 +159,15 @@ glslc shaders/solid_color.vert -o shaders/solid_color.vert.spv
 glslc shaders/solid_color.frag -o shaders/solid_color.frag.spv
 glslc shaders/grid_floor.vert  -o shaders/grid_floor.vert.spv
 glslc shaders/grid_floor.frag  -o shaders/grid_floor.frag.spv
+glslc shaders/textured.vert    -o shaders/textured.vert.spv
+glslc shaders/textured.frag    -o shaders/textured.frag.spv
 
 cmake -S . -B build
 cmake --build build -j
 ```
 
-Lance l'exécutable **depuis la racine du projet** — les shaders `.spv` y sont
-cherchés au chargement.
+Lance l'exécutable **depuis la racine du projet** — les shaders `.spv` ainsi que
+les modèles et textures du dossier `assets/` y sont cherchés au chargement.
 
 <img src="assets/divider.svg" width="100%" alt="">
 
