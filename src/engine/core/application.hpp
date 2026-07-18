@@ -28,6 +28,7 @@ namespace cinder {
         void run();
     private:
         void process_events();
+        void update_camera(float delta_seconds);
         void render() const;
 
         platform        platform_;
