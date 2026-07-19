@@ -1,8 +1,14 @@
 {
   "instances": [
-    { "model": "SM_Bld_Beach_Shop_01", "position": [10, 0, 0], "rotation_y": 0 },
-    { "model": "SM_Bld_Beach_Shop_01", "position": [22, 0, 0], "rotation_y": 90 },
-    { "model": "SM_Bld_Beach_Shop_01", "position": [10, 0, 16], "rotation_y": 180 },
-    { "model": "SM_Bld_Beach_Shop_01", "position": [30, 0, 32], "rotation_y": 180 }
+    {
+      "model": "SM_Bld_Beach_Shop_01",
+      "position": [
+        10.0,
+        0.0,
+        0.0
+      ],
+      "rotation_y": 0.0,
+      "scale": 1.0
+    }
   ]
 }

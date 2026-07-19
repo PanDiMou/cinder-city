@@ -4,59 +4,72 @@
 // See LICENSE at the repository root.
 
 #include "engine/scene/scene_loader.hpp"
-#include "engine/scene/transform.hpp"
-#include "engine/world/world.hpp"
-#include "engine/world/static_prop.hpp"
-#include "engine/world/entity.hpp"
-#include "engine/assets/model_catalog.hpp"
 
-#include <glm/gtc/quaternion.hpp>   // glm::angleAxis (fabrique une rotation)
-#include <nlohmann/json.hpp>        // la bibliothèque qui lit le JSON
+#include <nlohmann/json.hpp>   // la bibliothèque qui lit/écrit le JSON
 
-#include <fstream>    // std::ifstream (lire un fichier)
+#include <fstream>    // std::ifstream (lire) / std::ofstream (écrire)
 #include <stdexcept>
 
 namespace cinder {
-    void load_scene(const std::string& path, world& world, model_catalog& catalog) {
-        // Ouvre le fichier en lecture. Si l'ouverture échoue (fichier absent...),
-        // le test "!file" est vrai, et on lève une erreur.
+    std::vector<scene_instance> load_scene(const std::string& path) {
+        // Ouvre le fichier en lecture. "!file" est vrai si l'ouverture a échoué.
         std::ifstream file {path};
         if (!file) {
             throw std::runtime_error("load_scene : impossible d'ouvrir " + path);
         }
 
-        // Lit et analyse (parse) le contenu JSON. On entoure d'un try/catch car le
-        // JSON peut être mal formé (virgule oubliée, etc.) -> nlohmann lève alors une erreur.
+        // Analyse (parse) le JSON. On protège avec try/catch car le fichier peut être mal formé.
         nlohmann::json data;
         try {
-            file >> data;   // remplit `data` avec le contenu du fichier
+            file >> data;
         } catch (const nlohmann::json::parse_error& error) {
             throw std::runtime_error("load_scene(" + path + ") : " + error.what());
         }
 
-        // On parcourt le tableau "instances" du JSON. Chaque élément = un bâtiment.
-        for (const auto& instance : data.at("instances")) {
-            // .at("model") lit le champ "model" ; .get<std::string>() le convertit en texte.
-            const auto model {instance.at("model").get<std::string>()};
-            const auto& position {instance.at("position")};   // le tableau [x, y, z]
+        std::vector<scene_instance> instances;
 
-            // On construit le transform (position/rotation/échelle) de ce bâtiment.
-            transform transform;
-            transform.position = {position.at(0).get<float>(),   // x
-                                  position.at(1).get<float>(),   // y
-                                  position.at(2).get<float>()};  // z
+        // On parcourt le tableau "instances" et on remplit notre liste.
+        for (const auto& node : data.at("instances")) {
+            scene_instance instance;
+            instance.model = node.at("model").get<std::string>();
 
-            // .value("clef", défaut) lit un champ OPTIONNEL : si absent, on prend le défaut.
-            // Ici la rotation autour de l'axe vertical (Y), en degrés.
-            const auto rotation_y {instance.value("rotation_y", 0.0f)};
-            transform.rotation = glm::angleAxis(glm::radians(rotation_y), glm::vec3{0.0f, 1.0f, 0.0f});
+            const auto& position {node.at("position")};   // le tableau [x, y, z]
+            instance.position = {position.at(0).get<float>(),
+                                 position.at(1).get<float>(),
+                                 position.at(2).get<float>()};
 
-            const auto scale {instance.value("scale", 1.0f)};   // échelle uniforme, 1 par défaut
-            transform.scale = glm::vec3{scale};
+            // .value("clef", défaut) : lit un champ optionnel (défaut si absent).
+            instance.rotation_y = node.value("rotation_y", 0.0f);
+            instance.scale = node.value("scale", 1.0f);
 
-            // Crée l'entité : on demande au catalogue la géométrie du modèle
-            // (catalog.get(model)), et on la pose comme prop statique texturé.
-            world.spawn<static_prop>(catalog.get(model), transform, glm::vec4{1.0f}, material_type::textured);
+            instances.push_back(instance);
         }
+
+        return instances;
+    }
+
+    void save_scene(const std::string& path, const std::vector<scene_instance>& instances) {
+        // On construit l'objet JSON à partir de la liste.
+        nlohmann::json data;
+        data["instances"] = nlohmann::json::array();   // un tableau vide au départ
+
+        for (const scene_instance& instance : instances) {
+            // On ajoute un objet JSON par instance. La syntaxe {{"clef", valeur}, ...}
+            // décrit une paire clef/valeur.
+            data["instances"].push_back({
+                {"model", instance.model},
+                {"position", {instance.position.x, instance.position.y, instance.position.z}},
+                {"rotation_y", instance.rotation_y},
+                {"scale", instance.scale}
+            });
+        }
+
+        // Ouvre le fichier en écriture (le crée/écrase). Échec -> erreur.
+        std::ofstream file {path};
+        if (!file) {
+            throw std::runtime_error("save_scene : impossible d'écrire " + path);
+        }
+        // dump(2) : convertit le JSON en texte "joli" (indenté de 2 espaces).
+        file << data.dump(2);
     }
 }

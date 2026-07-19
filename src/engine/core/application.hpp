@@ -26,6 +26,7 @@
 #include "engine/assets/model_catalog.hpp"
 #include "engine/scene/camera.hpp"
 #include "engine/editor/ui.hpp"
+#include "engine/scene/scene_loader.hpp"   // pour scene_instance
 #include "engine/world/ground.hpp"
 #include "engine/world/world.hpp"
 
@@ -49,6 +50,10 @@ namespace cinder {
         void build_ui();                     // construit l'interface ImGui de la frame
         void set_fly_mode(bool enabled);     // bascule "vol caméra" <-> "curseur UI"
         void place_building(float mouse_x, float mouse_y); // pose le modèle choisi sous le curseur
+        void spawn_ground();                 // (re)crée le sol dans le monde
+        void spawn_instance(const scene_instance& instance); // crée l'entité d'une instance
+        void save() const;                         // écrit la scène courante dans city.json
+        void reload();                       // vide le monde et recharge city.json
         void render();                       // dessine le monde + l'UI à l'écran
 
         // --- Les membres : les briques qui composent le jeu ---
@@ -75,6 +80,10 @@ namespace cinder {
             "SM_Bld_Beach_Shop_03"
         };
         std::string              selected_model_ {"SM_Bld_Beach_Shop_01"};
+
+        // La scène en mémoire : la liste des bâtiments posés. C'est la SOURCE DE
+        // VÉRITÉ qu'on sauvegarde. Le monde (world_) en est le reflet visible.
+        std::vector<scene_instance> instances_;
     };
 }
 

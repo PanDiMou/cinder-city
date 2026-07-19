@@ -6,23 +6,33 @@
 #include "application.hpp"
 #include "engine/world/static_prop.hpp"
 #include "engine/scene/transform.hpp"
-#include "engine/scene/scene_loader.hpp"
+#include "engine/core/log.hpp"
 
+#include <glm/gtc/quaternion.hpp>   // glm::angleAxis
 #include <imgui.h>
 #include <SDL3/SDL.h>
 
 namespace cinder {
+    namespace {
+        // Le fichier de scène : on le lit au démarrage et on l'écrit à la sauvegarde.
+        constexpr const char* scene_path {"assets/city.json"};
+    }
+
     // Constructeur : prépare la scène de départ.
     application::application() {
-        // Ajoute le sol au monde. spawn<static_prop> crée une entité "prop statique"
-        // (qui ne bouge jamais). Les arguments : la géométrie (ground_mesh_), sa
-        // position/rotation (transform{} = par défaut, à l'origine), sa couleur, et
-        // le matériau grid_floor (le shader qui dessine le quadrillage gris).
-        world_.spawn<static_prop>(ground_mesh_, transform{}, glm::vec4{0.30f, 0.30f, 0.32f, 1.0f}, material_type::grid_floor);
+        spawn_ground();   // le sol quadrillé (il ne fait pas partie des instances sauvegardées)
 
-        // La ville vit dans les données, pas dans le code : on charge les bâtiments
-        // depuis le fichier de scène. Modifier city.json suffit à changer la ville.
-        load_scene("assets/city.json", world_, catalog_);
+        // On charge la liste des bâtiments depuis le fichier, puis on crée une entité
+        // pour chacun. On protège avec try/catch : un fichier absent/invalide ne doit
+        // pas faire planter le jeu, on démarre juste avec une scène vide.
+        try {
+            instances_ = load_scene(scene_path);
+        } catch (const std::exception& error) {
+            log::warning("Scène non chargée : {}", error.what());
+        }
+        for (const scene_instance& instance : instances_) {
+            spawn_instance(instance);
+        }
 
         // On démarre en "mode vol" : la souris est capturée et pilote la caméra.
         // La touche Tab bascule ensuite vers le "mode curseur" (pour cliquer dans l'UI).
@@ -145,7 +155,7 @@ namespace cinder {
         // Style "mode immédiat" : on décrit l'UI à chaque frame par des appels.
         ImGui::Begin("Cinder City");                                   // ouvre une fenêtre
         ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));    // images par seconde
-        ImGui::Text("Bâtiments : %zu", world_.entities().size());      // nombre d'entités
+        ImGui::Text("Bâtiments : %zu", instances_.size());            // nombre de bâtiments posés (hors sol)
         if (ground.has_value()) {                                      // has_value() : y a-t-il un point ?
             ImGui::Text("Souris au sol : (%.1f, %.1f)", ground->x, ground->z);
         } else {
@@ -164,7 +174,60 @@ namespace cinder {
         }
         ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol pour poser.");
 
+        // --- Sauvegarde / rechargement de la scène ---
+        ImGui::SeparatorText("Scène");
+        // ImGui::Button renvoie vrai la frame où on clique dessus.
+        if (ImGui::Button("Sauvegarder")) {
+            save();
+        }
+        ImGui::SameLine();   // met le bouton suivant sur la MÊME ligne
+        if (ImGui::Button("Recharger")) {
+            reload();
+        }
+
         ImGui::End();                                                  // ferme la fenêtre
+    }
+
+    // (Re)crée le sol dans le monde. Le sol n'est pas une "instance" sauvegardée :
+    // il est toujours là, on le recrée nous-mêmes (au démarrage et au rechargement).
+    void application::spawn_ground() {
+        world_.spawn<static_prop>(ground_mesh_, transform{}, glm::vec4{0.30f, 0.30f, 0.32f, 1.0f}, material_type::grid_floor);
+    }
+
+    // Transforme une instance (donnée) en entité visible dans le monde.
+    void application::spawn_instance(const scene_instance& instance) {
+        transform transform;
+        transform.position = instance.position;
+        // angleAxis fabrique une rotation d'un angle donné autour d'un axe (ici Y, vertical).
+        transform.rotation = glm::angleAxis(glm::radians(instance.rotation_y), glm::vec3{0.0f, 1.0f, 0.0f});
+        transform.scale = glm::vec3{instance.scale};
+
+        world_.spawn<static_prop>(catalog_.get(instance.model), transform, glm::vec4{1.0f}, material_type::textured);
+    }
+
+    // Écrit la scène courante (la liste d'instances) dans le fichier city.json.
+    void application::save() const {
+        try {
+            save_scene(scene_path, instances_);
+            log::info("Scène sauvegardée ({} bâtiments)", instances_.size());
+        } catch (const std::exception& error) {
+            log::error("Échec de la sauvegarde : {}", error.what());
+        }
+    }
+
+    // Vide le monde et le reconstruit depuis le fichier (annule les poses non sauvées).
+    void application::reload() {
+        world_.clear();     // supprime toutes les entités (sol compris)
+        spawn_ground();     // on recrée le sol
+        try {
+            instances_ = load_scene(scene_path);   // relit la liste depuis le disque
+        } catch (const std::exception& error) {
+            log::error("Échec du rechargement : {}", error.what());
+            instances_.clear();
+        }
+        for (const scene_instance& instance : instances_) {
+            spawn_instance(instance);
+        }
     }
 
     // Pose le bâtiment sélectionné à l'endroit du sol pointé par (mouse_x, mouse_y).
@@ -181,11 +244,11 @@ namespace cinder {
             return;
         }
 
-        // On crée une nouvelle entité, exactement comme le fait scene_loader :
-        // géométrie du modèle (via le catalogue), position = point cliqué, matériau texturé.
-        world_.spawn<static_prop>(catalog_.get(selected_model_),
-                                  transform{.position = *ground},   // *ground = le point (déréférence l'optional)
-                                  glm::vec4{1.0f}, material_type::textured);
+        // On ajoute d'abord l'instance à la liste (la source de vérité, sauvegardable),
+        // puis on la matérialise dans le monde. *ground déréférence l'optional (le point).
+        const scene_instance instance {.model = selected_model_, .position = *ground};
+        instances_.push_back(instance);
+        spawn_instance(instance);
     }
 
     // Bascule entre "mode vol" et "mode curseur".

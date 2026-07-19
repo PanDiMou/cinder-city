@@ -56,6 +56,12 @@ namespace cinder {
             return entities_;
         }
 
+        // Vide le monde : détruit toutes les entités. Sert au "Recharger" de l'éditeur.
+        // Les unique_ptr détruisent chaque entité automatiquement.
+        void clear() {
+            entities_.clear();
+        }
+
     private:
         // Un tableau de pointeurs intelligents vers des entités. Pourquoi des
         // pointeurs et pas des entity directement ? Parce qu'on stocke des types
