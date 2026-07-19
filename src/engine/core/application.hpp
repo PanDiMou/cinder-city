@@ -30,8 +30,11 @@
 #include "engine/world/ground.hpp"
 #include "engine/world/world.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
+
+#include <glm/glm.hpp>
 
 namespace cinder {
     class application {
@@ -50,11 +53,20 @@ namespace cinder {
         void build_ui();                     // construit l'interface ImGui de la frame
         void set_fly_mode(bool enabled);     // bascule "vol caméra" <-> "curseur UI"
         void place_building(float mouse_x, float mouse_y); // pose le modèle choisi sous le curseur
+        void select_building(float mouse_x, float mouse_y); // sélectionne le bâtiment le plus proche du clic
         void spawn_ground();                 // (re)crée le sol dans le monde
         void spawn_instance(const scene_instance& instance); // crée l'entité d'une instance
-        void save() const;                         // écrit la scène courante dans city.json
+        void rebuild_world();                // reconstruit le monde à partir des instances_
+        void save() const;                   // écrit la scène courante dans city.json
         void reload();                       // vide le monde et recharge city.json
         void render();                       // dessine le monde + l'UI à l'écran
+
+        // Point du sol visé par le curseur (ou rien si le rayon manque le sol).
+        // Regroupe le code de picking utilisé à plusieurs endroits.
+        [[nodiscard]] std::optional<glm::vec3> mouse_ground(float mouse_x, float mouse_y) const;
+
+        // L'outil actif de l'éditeur : poser un nouveau bâtiment, ou en sélectionner un.
+        enum class tool { place, select };
 
         // --- Les membres : les briques qui composent le jeu ---
         // Rappel : ils sont initialisés dans cet ordre. Certains ont besoin d'un
@@ -84,6 +96,9 @@ namespace cinder {
         // La scène en mémoire : la liste des bâtiments posés. C'est la SOURCE DE
         // VÉRITÉ qu'on sauvegarde. Le monde (world_) en est le reflet visible.
         std::vector<scene_instance> instances_;
+
+        tool tool_ {tool::place};   // outil courant de l'éditeur
+        int  selected_index_ {-1};  // indice du bâtiment sélectionné dans instances_ (-1 = aucun)
     };
 }
 

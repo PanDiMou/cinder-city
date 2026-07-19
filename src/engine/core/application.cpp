@@ -97,10 +97,14 @@ namespace cinder {
                     }
                     break;
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:   // un bouton de souris est cliqué
-                    // Clic gauche, en mode curseur, et PAS sur un panneau ImGui
-                    // (wants_mouse) -> on pose le bâtiment choisi à cet endroit du sol.
+                    // Clic gauche, en mode curseur, et PAS sur un panneau ImGui.
+                    // Selon l'outil actif : poser un nouveau bâtiment, ou en sélectionner un.
                     if (event.button.button == SDL_BUTTON_LEFT && !fly_mode_ && !ui_.wants_mouse()) {
-                        place_building(event.button.x, event.button.y);
+                        if (tool_ == tool::place) {
+                            place_building(event.button.x, event.button.y);
+                        } else {
+                            select_building(event.button.x, event.button.y);
+                        }
                     }
                     break;
                 default:
@@ -141,16 +145,11 @@ namespace cinder {
     void application::build_ui() {
         const ImGuiIO& io {ImGui::GetIO()}; // io contient des infos utiles (ex : FPS)
 
-        // On calcule le point du SOL visé par la souris (picking). C'est là qu'un
-        // clic posera le bâtiment sélectionné.
+        // Point du sol visé par le curseur (pour l'affichage d'aide).
         float mouse_x {0.0f};
         float mouse_y {0.0f};
-        SDL_GetMouseState(&mouse_x, &mouse_y);   // position du curseur en pixels
-        int width {0};
-        int height {0};
-        SDL_GetWindowSizeInPixels(window_.native(), &width, &height);
-        const std::optional<glm::vec3> ground {camera_.pick_ground(
-            {mouse_x, mouse_y}, {static_cast<float>(width), static_cast<float>(height)})};
+        SDL_GetMouseState(&mouse_x, &mouse_y);
+        const std::optional<glm::vec3> ground {mouse_ground(mouse_x, mouse_y)};
 
         // Style "mode immédiat" : on décrit l'UI à chaque frame par des appels.
         ImGui::Begin("Cinder City");                                   // ouvre une fenêtre
@@ -162,7 +161,18 @@ namespace cinder {
             ImGui::Text("Souris au sol : —");                          // rayon parallèle au sol / vers le ciel
         }
 
-        // --- Palette de l'éditeur : la liste des modèles qu'on peut poser ---
+        // --- Outil actif : poser ou sélectionner ---
+        ImGui::SeparatorText("Outil");
+        // RadioButton renvoie vrai au clic ; on change alors l'outil.
+        if (ImGui::RadioButton("Placer", tool_ == tool::place)) {
+            tool_ = tool::place;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Sélectionner", tool_ == tool::select)) {
+            tool_ = tool::select;
+        }
+
+        // --- Palette de modèles (utile en mode Placer) ---
         ImGui::SeparatorText("Modèles");
         for (const std::string& model : model_list_) {
             // ImGui::Selectable dessine une ligne cliquable. Son 2e argument dit si
@@ -172,7 +182,37 @@ namespace cinder {
                 selected_model_ = model;
             }
         }
-        ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol pour poser.");
+        ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol.");
+
+        // --- Panneau d'édition du bâtiment sélectionné ---
+        // On vérifie que l'indice est valide (>= 0 et dans les bornes de la liste).
+        if (selected_index_ >= 0 && selected_index_ < static_cast<int>(instances_.size())) {
+            scene_instance& selected {instances_[static_cast<std::size_t>(selected_index_)]};
+
+            ImGui::SeparatorText("Bâtiment sélectionné");
+            ImGui::Text("%s", selected.model.c_str());
+
+            // DragFloat(3) = un champ qu'on modifie en glissant la souris dessus.
+            // Chacun renvoie vrai quand la valeur change ; on cumule dans "changed".
+            bool changed {false};
+            changed |= ImGui::DragFloat3("Position", &selected.position.x, 0.1f);
+            changed |= ImGui::DragFloat("Rotation Y", &selected.rotation_y, 1.0f);
+            changed |= ImGui::DragFloat("Échelle", &selected.scale, 0.01f, 0.1f, 10.0f);
+
+            if (ImGui::Button("Pivoter +90°")) {
+                selected.rotation_y += 90.0f;
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Supprimer")) {
+                // erase enlève l'élément de la liste ; begin() + i = position de l'élément.
+                instances_.erase(instances_.begin() + selected_index_);
+                selected_index_ = -1;
+                rebuild_world();          // le monde doit refléter la liste modifiée
+            } else if (changed) {
+                rebuild_world();          // une valeur a changé : on reconstruit le monde
+            }
+        }
 
         // --- Sauvegarde / rechargement de la scène ---
         ImGui::SeparatorText("Scène");
@@ -186,6 +226,15 @@ namespace cinder {
         }
 
         ImGui::End();                                                  // ferme la fenêtre
+    }
+
+    // Point du sol visé par le curseur, ou rien. Regroupe le calcul de picking.
+    std::optional<glm::vec3> application::mouse_ground(const float mouse_x, const float mouse_y) const {
+        int width {0};
+        int height {0};
+        SDL_GetWindowSizeInPixels(window_.native(), &width, &height);
+        return camera_.pick_ground({mouse_x, mouse_y},
+                                   {static_cast<float>(width), static_cast<float>(height)});
     }
 
     // (Re)crée le sol dans le monde. Le sol n'est pas une "instance" sauvegardée :
@@ -217,29 +266,20 @@ namespace cinder {
 
     // Vide le monde et le reconstruit depuis le fichier (annule les poses non sauvées).
     void application::reload() {
-        world_.clear();     // supprime toutes les entités (sol compris)
-        spawn_ground();     // on recrée le sol
         try {
             instances_ = load_scene(scene_path);   // relit la liste depuis le disque
         } catch (const std::exception& error) {
             log::error("Échec du rechargement : {}", error.what());
             instances_.clear();
         }
-        for (const scene_instance& instance : instances_) {
-            spawn_instance(instance);
-        }
+        selected_index_ = -1;   // l'ancienne sélection n'a plus de sens
+        rebuild_world();        // reconstruit le sol + tous les bâtiments
     }
 
     // Pose le bâtiment sélectionné à l'endroit du sol pointé par (mouse_x, mouse_y).
     void application::place_building(const float mouse_x, const float mouse_y) {
-        int width {0};
-        int height {0};
-        SDL_GetWindowSizeInPixels(window_.native(), &width, &height);
-
-        // On retrouve le point du sol sous le clic. Si le rayon ne touche pas le
-        // sol (clic vers le ciel), on ne pose rien.
-        const std::optional<glm::vec3> ground {camera_.pick_ground(
-            {mouse_x, mouse_y}, {static_cast<float>(width), static_cast<float>(height)})};
+        // Si le rayon ne touche pas le sol (clic vers le ciel), on ne pose rien.
+        const std::optional<glm::vec3> ground {mouse_ground(mouse_x, mouse_y)};
         if (!ground.has_value()) {
             return;
         }
@@ -249,6 +289,43 @@ namespace cinder {
         const scene_instance instance {.model = selected_model_, .position = *ground};
         instances_.push_back(instance);
         spawn_instance(instance);
+    }
+
+    // Sélectionne le bâtiment le plus proche du point cliqué (dans un certain rayon).
+    void application::select_building(const float mouse_x, const float mouse_y) {
+        const std::optional<glm::vec3> ground {mouse_ground(mouse_x, mouse_y)};
+        if (!ground.has_value()) {
+            return;
+        }
+
+        // Rayon de sélection : on ne sélectionne que si un bâtiment est assez proche.
+        // On compare des distances AU CARRÉ pour éviter une racine carrée (plus rapide).
+        constexpr float radius {8.0f};
+        float best_distance2 {radius * radius};
+        int best {-1};
+
+        for (int i {0}; i < static_cast<int>(instances_.size()); ++i) {
+            // Distance dans le plan horizontal (on ignore la hauteur Y).
+            const float dx {instances_[static_cast<std::size_t>(i)].position.x - ground->x};
+            const float dz {instances_[static_cast<std::size_t>(i)].position.z - ground->z};
+            const float distance2 {dx * dx + dz * dz};
+            if (distance2 < best_distance2) {
+                best_distance2 = distance2;
+                best = i;
+            }
+        }
+        selected_index_ = best;   // -1 si aucun bâtiment n'était assez proche
+    }
+
+    // Reconstruit entièrement le monde à partir de la liste d'instances (source de vérité).
+    // Appelé après une modification (déplacer, tourner, supprimer). Bon marché : les
+    // géométries sont déjà en cache dans le catalogue, on ne recrée que les entités.
+    void application::rebuild_world() {
+        world_.clear();
+        spawn_ground();
+        for (const scene_instance& instance : instances_) {
+            spawn_instance(instance);
+        }
     }
 
     // Bascule entre "mode vol" et "mode curseur".
