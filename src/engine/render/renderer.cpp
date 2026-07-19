@@ -11,6 +11,7 @@
 #include "engine/scene/camera.hpp"
 #include "engine/world/world.hpp"
 #include "engine/world/entity.hpp"
+#include "engine/editor/ui.hpp"
 #include "engine/core/log.hpp"
 
 #include <SDL3/SDL.h>
@@ -128,7 +129,9 @@ namespace cinder {
         }
     }
 
-    void renderer::draw(const camera& camera, const world& world) const {
+    void renderer::draw(const camera& camera, const world& world, ui& ui) const {
+        ui.finalize(); // close the ImGui frame built this tick
+
         SDL_GPUCommandBuffer* command_buffer {SDL_AcquireGPUCommandBuffer(device_)};
         if (command_buffer == nullptr) {
             log::error("SDL_AcquireGPUCommandBuffer: {}", SDL_GetError());
@@ -147,6 +150,9 @@ namespace cinder {
             SDL_SubmitGPUCommandBuffer(command_buffer); // window minimized
             return;
         }
+
+        // Stage the UI's vertex/index data before opening any render pass.
+        ui.upload(command_buffer);
 
         const float aspect {static_cast<float>(width) / static_cast<float>(height)};
         const glm::mat4 view_projection {camera.view_projection(aspect)};
@@ -197,6 +203,17 @@ namespace cinder {
         }
 
         SDL_EndGPURenderPass(pass);
+
+        // Second pass: draw the UI on top of the world (keep the color, no depth).
+        SDL_GPUColorTargetInfo ui_color {};
+        ui_color.texture = swapchain;
+        ui_color.load_op = SDL_GPU_LOADOP_LOAD;
+        ui_color.store_op = SDL_GPU_STOREOP_STORE;
+
+        SDL_GPURenderPass* ui_pass {SDL_BeginGPURenderPass(command_buffer, &ui_color, 1, nullptr)};
+        ui.render(command_buffer, ui_pass);
+        SDL_EndGPURenderPass(ui_pass);
+
         SDL_SubmitGPUCommandBuffer(command_buffer);
     }
 }

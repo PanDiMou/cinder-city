@@ -8,6 +8,7 @@
 #include "engine/scene/transform.hpp"
 #include "engine/scene/scene_loader.hpp"
 
+#include <imgui.h>
 #include <SDL3/SDL.h>
 
 namespace cinder {
@@ -30,6 +31,8 @@ namespace cinder {
             process_events();
             world_.update(delta);
             update_camera(delta);
+            ui_.begin_frame();
+            build_ui();
             render();
         }
     }
@@ -39,6 +42,8 @@ namespace cinder {
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            ui_.process_event(event); // ImGui sees every event first
+
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     running_ = false;
@@ -76,7 +81,16 @@ namespace cinder {
         }
     }
 
-    void application::render() const {
-        renderer_.draw(camera_, world_);
+    void application::build_ui() const {
+        const ImGuiIO& io {ImGui::GetIO()};
+
+        ImGui::Begin("Cinder City");
+        ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));
+        ImGui::Text("Bâtiments : %zu", world_.entities().size());
+        ImGui::End();
+    }
+
+    void application::render() {
+        renderer_.draw(camera_, world_, ui_);
     }
 }

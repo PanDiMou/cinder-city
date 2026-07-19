@@ -77,6 +77,15 @@ FetchContent_Declare(
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(nlohmann_json)
 
+# Dear ImGui: immediate-mode UI for the in-engine editor.
+FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG        v1.92.8
+        GIT_SHALLOW    ON
+)
+FetchContent_MakeAvailable(imgui)
+
 # ---------------------------------------------------------------------------
 # Executable
 # ---------------------------------------------------------------------------
@@ -97,6 +106,7 @@ add_executable(CinderCity
         src/engine/assets/stb_image_impl.cpp
         src/engine/assets/model_catalog.cpp
         src/engine/scene/scene_loader.cpp
+        src/engine/editor/ui.cpp
 )
 
 # Include from the source root so headers use full "engine/..." paths.
@@ -112,3 +122,15 @@ target_include_directories(CinderCity PRIVATE ${ufbx_SOURCE_DIR})
 
 # stb is header-only: expose its headers (the implementation lives in stb_image_impl.cpp).
 target_include_directories(CinderCity PRIVATE ${stb_SOURCE_DIR})
+
+# Dear ImGui has no CMake target: compile its core + SDL3/SDL_gpu backends into ours.
+target_sources(CinderCity PRIVATE
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlgpu3.cpp
+)
+target_include_directories(CinderCity PRIVATE ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)

@@ -17,6 +17,7 @@ namespace cinder {
     class graphics_device;
     class camera;
     class world;
+    class ui;
 
     // Owns the graphics pipeline and draws the world each frame.
     class renderer {
@@ -27,7 +28,7 @@ namespace cinder {
 
         ~renderer();
 
-        void draw(const camera&, const world&) const;
+        void draw(const camera&, const world&, ui&) const;
 
     private:
         SDL_GPUDevice* device_ {nullptr};

@@ -13,6 +13,7 @@
 #include "engine/render/gpu_mesh.hpp"
 #include "engine/assets/model_catalog.hpp"
 #include "engine/scene/camera.hpp"
+#include "engine/editor/ui.hpp"
 #include "engine/world/ground.hpp"
 #include "engine/world/world.hpp"
 
@@ -27,7 +28,8 @@ namespace cinder {
     private:
         void process_events();
         void update_camera(float delta_seconds);
-        void render() const;
+        void build_ui() const;
+        void render();
 
         platform        platform_;
         window          window_;
@@ -38,6 +40,7 @@ namespace cinder {
         model_catalog   catalog_ {graphics_device_};   // loads FBX models once, on demand
         world           world_;
         camera          camera_;
+        ui              ui_ {graphics_device_};
         bool            running_ {true};
     };
 }
