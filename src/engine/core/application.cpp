@@ -86,6 +86,13 @@ namespace cinder {
                                      -event.motion.yrel * look_sensitivity);
                     }
                     break;
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:   // un bouton de souris est cliqué
+                    // Clic gauche, en mode curseur, et PAS sur un panneau ImGui
+                    // (wants_mouse) -> on pose le bâtiment choisi à cet endroit du sol.
+                    if (event.button.button == SDL_BUTTON_LEFT && !fly_mode_ && !ui_.wants_mouse()) {
+                        place_building(event.button.x, event.button.y);
+                    }
+                    break;
                 default:
                     break; // les autres évènements ne nous intéressent pas ici
             }
@@ -120,12 +127,12 @@ namespace cinder {
         }
     }
 
-    // Construit l'interface de debug de cette frame (une petite fenêtre ImGui).
-    void application::build_ui() const {
+    // Construit l'interface de cette frame (fenêtre debug + palette de l'éditeur).
+    void application::build_ui() {
         const ImGuiIO& io {ImGui::GetIO()}; // io contient des infos utiles (ex : FPS)
 
-        // On calcule le point du SOL visé par la souris (picking). Utile surtout en
-        // mode curseur (Tab) : c'est là qu'on posera bientôt les bâtiments.
+        // On calcule le point du SOL visé par la souris (picking). C'est là qu'un
+        // clic posera le bâtiment sélectionné.
         float mouse_x {0.0f};
         float mouse_y {0.0f};
         SDL_GetMouseState(&mouse_x, &mouse_y);   // position du curseur en pixels
@@ -144,7 +151,41 @@ namespace cinder {
         } else {
             ImGui::Text("Souris au sol : —");                          // rayon parallèle au sol / vers le ciel
         }
+
+        // --- Palette de l'éditeur : la liste des modèles qu'on peut poser ---
+        ImGui::SeparatorText("Modèles");
+        for (const std::string& model : model_list_) {
+            // ImGui::Selectable dessine une ligne cliquable. Son 2e argument dit si
+            // elle est "sélectionnée" (surlignée). Elle renvoie vrai au clic ->
+            // on met alors ce modèle comme sélection courante.
+            if (ImGui::Selectable(model.c_str(), selected_model_ == model)) {
+                selected_model_ = model;
+            }
+        }
+        ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol pour poser.");
+
         ImGui::End();                                                  // ferme la fenêtre
+    }
+
+    // Pose le bâtiment sélectionné à l'endroit du sol pointé par (mouse_x, mouse_y).
+    void application::place_building(const float mouse_x, const float mouse_y) {
+        int width {0};
+        int height {0};
+        SDL_GetWindowSizeInPixels(window_.native(), &width, &height);
+
+        // On retrouve le point du sol sous le clic. Si le rayon ne touche pas le
+        // sol (clic vers le ciel), on ne pose rien.
+        const std::optional<glm::vec3> ground {camera_.pick_ground(
+            {mouse_x, mouse_y}, {static_cast<float>(width), static_cast<float>(height)})};
+        if (!ground.has_value()) {
+            return;
+        }
+
+        // On crée une nouvelle entité, exactement comme le fait scene_loader :
+        // géométrie du modèle (via le catalogue), position = point cliqué, matériau texturé.
+        world_.spawn<static_prop>(catalog_.get(selected_model_),
+                                  transform{.position = *ground},   // *ground = le point (déréférence l'optional)
+                                  glm::vec4{1.0f}, material_type::textured);
     }
 
     // Bascule entre "mode vol" et "mode curseur".

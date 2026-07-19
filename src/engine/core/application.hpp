@@ -29,6 +29,9 @@
 #include "engine/world/ground.hpp"
 #include "engine/world/world.hpp"
 
+#include <string>
+#include <vector>
+
 namespace cinder {
     class application {
     public:
@@ -43,8 +46,9 @@ namespace cinder {
         // Ces méthodes privées découpent le travail d'une frame (une image).
         void process_events();               // lit clavier/souris/fermeture
         void update_camera(float delta_seconds); // déplace la caméra selon les touches
-        void build_ui() const;               // construit l'interface ImGui de la frame
+        void build_ui();                     // construit l'interface ImGui de la frame
         void set_fly_mode(bool enabled);     // bascule "vol caméra" <-> "curseur UI"
+        void place_building(float mouse_x, float mouse_y); // pose le modèle choisi sous le curseur
         void render();                       // dessine le monde + l'UI à l'écran
 
         // --- Les membres : les briques qui composent le jeu ---
@@ -62,6 +66,15 @@ namespace cinder {
         ui              ui_ {graphics_device_};                 // l'interface (Dear ImGui)
         bool            fly_mode_ {true};                       // true : la souris pilote la caméra ; false : elle pilote l'UI (Tab pour basculer)
         bool            running_ {true};                        // devient false pour arrêter la boucle
+
+        // Palette de l'éditeur : les modèles qu'on peut poser, et celui sélectionné.
+        // (Ils partagent tous la même texture de palette que celle chargée par le renderer.)
+        std::vector<std::string> model_list_ {
+            "SM_Bld_Beach_Shop_01",
+            "SM_Bld_Beach_Shop_02",
+            "SM_Bld_Beach_Shop_03"
+        };
+        std::string              selected_model_ {"SM_Bld_Beach_Shop_01"};
     };
 }
 

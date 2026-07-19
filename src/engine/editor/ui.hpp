@@ -42,6 +42,10 @@ namespace cinder {
         void upload(SDL_GPUCommandBuffer* command_buffer);                          // prépare les données de dessin (VRAM)
         void render(SDL_GPUCommandBuffer* command_buffer, SDL_GPURenderPass* pass); // dessine l'UI dans la passe
 
+        // Vrai si la souris survole/utilise un panneau ImGui. Sert à ne PAS poser
+        // de bâtiment quand on clique sur l'interface plutôt que sur le sol.
+        [[nodiscard]] bool wants_mouse() const;
+
     private:
         SDL_GPUDevice* device_ {nullptr};
     };

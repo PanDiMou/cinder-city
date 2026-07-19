@@ -81,4 +81,11 @@ namespace cinder {
     void ui::render(SDL_GPUCommandBuffer* command_buffer, SDL_GPURenderPass* pass) {
         ImGui_ImplSDLGPU3_RenderDrawData(ImGui::GetDrawData(), command_buffer, pass);
     }
+
+    // WantCaptureMouse = ImGui nous dit "cette souris est pour moi" (curseur au-dessus
+    // d'une fenêtre, ou en train d'y cliquer). On s'en sert pour éviter de poser un
+    // bâtiment quand l'utilisateur clique en réalité sur un panneau.
+    bool ui::wants_mouse() const {
+        return ImGui::GetIO().WantCaptureMouse;
+    }
 }
