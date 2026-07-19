@@ -68,7 +68,7 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG) vers la VRAM | ✅ |
 | 🗺️ Scènes (données) | ![JSON](https://img.shields.io/badge/nlohmann/json-3B5998?style=flat-square) | Ville décrite en données (`city.json`), hors du code | ✅ |
 | 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
-| 🧭 Interface / éditeur | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Overlay ImGui intégré ; outils d'édition en cours | 🟨 |
+| 🧭 Éditeur in-game | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Poser / sélectionner / éditer / sauver la ville à la souris | ✅ |
 | 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions | 🔜 |
 | 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage | 🔜 |
 | 📊 Profilage | ![Tracy](https://img.shields.io/badge/Tracy-0E9F6E?style=flat-square) | Analyse des performances en temps réel | 🔜 |
@@ -86,7 +86,7 @@ src/engine/
 ├── assets/   fbx_loader (import FBX) · stb_image (décodage PNG) · model_catalog
 ├── scene/    camera (vol libre) · transform · scene_loader (city.json)
 ├── world/    world · entity · static_prop · ground
-└── editor/   ui (Dear ImGui — overlay & futur éditeur)
+└── editor/   ui (Dear ImGui — éditeur de ville in-game)
 ```
 
 <img src="assets/architecture.svg" width="100%" alt="Schéma d'architecture de Cinder City">
@@ -122,9 +122,12 @@ world_.spawn<static_prop>(catalog_.get("SM_Bld_Beach_Shop_01"),
                           glm::vec4 {1.0f}, material_type::textured);
 ```
 
-**Interface & navigation.** On se déplace dans la scène avec une **caméra libre**
-(vol au clavier + souris). Une couche **Dear ImGui** est intégrée par-dessus le
-rendu (seconde passe) et servira de base à l'éditeur de ville à venir.
+**Éditeur de ville in-game.** On se déplace dans la scène avec une **caméra libre**
+(vol au clavier + souris), et on bâtit la ville **directement à la souris** grâce à
+une couche **Dear ImGui**. Le picking (rayon curseur → sol) permet de **poser** un
+modèle au clic, de **sélectionner** un bâtiment existant, puis de le **déplacer,
+tourner, redimensionner ou supprimer** — le tout **sauvegardé** dans `city.json`.
+`Tab` bascule entre pilotage caméra et interaction avec l'interface.
 
 **Principes de code.** RAII systématique (chaque ressource GPU possédée et
 libérée par un objet), C++23 (concepts, `std::format`, designated initializers),
@@ -148,14 +151,16 @@ optique pédagogique — pour rester maintenable, relisible et prêt au multijou
 | ✅ | Caméra libre — vol clavier (ZQSD) + souris | Fait |
 | ✅ | Intégration Dear ImGui (overlay debug, rendu en 2ᵉ passe) | Fait |
 | ✅ | Base de code intégralement commentée (français, pédagogique) | Fait |
-| 🟨 | Éditeur in-game — poser / déplacer / sauver la ville | En cours |
-| ⬜ | Peupler la ville — bâtiments, véhicules, PNJ | À venir |
+| ✅ | Picking souris (rayon curseur → sol) | Fait |
+| ✅ | Éditeur in-game — poser / sélectionner / éditer / sauver la ville | Fait |
+| ⬜ | Surlignage de la sélection + import de plus de modèles | À venir |
+| ⬜ | Peupler la ville — véhicules, PNJ | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🎯 Picking souris (rayon curseur → sol) pour poser des bâtiments.
+**Prochaine étape :** 🏙️ Enrichir le catalogue et peupler la ville.
 
 ```
-Progression du socle   [■■■■■■▌□□□]  65%
+Progression du socle   [■■■■■■■▌□□]  75%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
@@ -189,8 +194,15 @@ Lance l'exécutable **depuis la racine du projet** — les shaders `.spv` ainsi 
 la scène, les modèles et les textures du dossier `assets/` y sont cherchés au
 chargement.
 
-**Contrôles (caméra libre) :** `ZQSD` pour se déplacer, la souris pour regarder,
-`Espace` / `Shift` pour monter / descendre, `Échap` pour quitter.
+**Contrôles**
+
+- **Navigation (mode vol) :** `ZQSD` pour se déplacer, la souris pour regarder,
+  `Espace` / `Shift` pour monter / descendre.
+- **`Tab`** : bascule entre pilotage caméra et interaction avec l'interface.
+- **Éditeur (mode curseur) :** outil *Placer* → clic gauche pour poser le modèle
+  choisi ; outil *Sélectionner* → clic sur un bâtiment pour l'éditer (déplacer,
+  tourner, redimensionner, supprimer), puis *Sauvegarder*.
+- **`Échap`** : quitter.
 
 <img src="assets/divider.svg" width="100%" alt="">
 
