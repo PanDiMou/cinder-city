@@ -121,10 +121,26 @@ namespace cinder {
     void application::build_ui() const {
         const ImGuiIO& io {ImGui::GetIO()}; // io contient des infos utiles (ex : FPS)
 
+        // On calcule le point du SOL visé par la souris (picking). Utile surtout en
+        // mode curseur (Tab) : c'est là qu'on posera bientôt les bâtiments.
+        float mouse_x {0.0f};
+        float mouse_y {0.0f};
+        SDL_GetMouseState(&mouse_x, &mouse_y);   // position du curseur en pixels
+        int width {0};
+        int height {0};
+        SDL_GetWindowSizeInPixels(window_.native(), &width, &height);
+        const std::optional<glm::vec3> ground {camera_.pick_ground(
+            {mouse_x, mouse_y}, {static_cast<float>(width), static_cast<float>(height)})};
+
         // Style "mode immédiat" : on décrit l'UI à chaque frame par des appels.
         ImGui::Begin("Cinder City");                                   // ouvre une fenêtre
         ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));    // images par seconde
         ImGui::Text("Bâtiments : %zu", world_.entities().size());      // nombre d'entités
+        if (ground.has_value()) {                                      // has_value() : y a-t-il un point ?
+            ImGui::Text("Souris au sol : (%.1f, %.1f)", ground->x, ground->z);
+        } else {
+            ImGui::Text("Souris au sol : —");                          // rayon parallèle au sol / vers le ciel
+        }
         ImGui::End();                                                  // ferme la fenêtre
     }
 

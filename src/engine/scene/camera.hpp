@@ -22,7 +22,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <cmath>   // std::cos, std::sin
+#include <cmath>     // std::cos, std::sin, std::abs
+#include <optional>  // std::optional (une valeur "peut-être présente")
 
 namespace cinder {
     class camera {
@@ -58,6 +59,45 @@ namespace cinder {
             // fov = champ de vision, near/far = distances de rendu min/max.
             const glm::mat4 projection {glm::perspective(fov_, aspect, near_, far_)};
             return projection * view;   // combinées en une seule matrice
+        }
+
+        // PICKING : renvoie le point du SOL (plan Y=0) visé par la souris.
+        // Renvoie std::optional : soit un point, soit "rien" (nullopt) si le rayon
+        // ne touche pas le sol. mouse = position du curseur en pixels ; viewport =
+        // taille de la fenêtre en pixels.
+        [[nodiscard]] std::optional<glm::vec3> pick_ground(const glm::vec2 mouse, const glm::vec2 viewport) const {
+            // 1) Pixels -> NDC (coordonnées normalisées de -1 à 1). On inverse Y car
+            //    l'écran compte de haut en bas, alors que le NDC va de bas en haut.
+            const float ndc_x {2.0f * mouse.x / viewport.x - 1.0f};
+            const float ndc_y {1.0f - 2.0f * mouse.y / viewport.y};
+
+            // 2) On inverse la matrice caméra : elle projette le monde vers l'écran,
+            //    donc son inverse fait le trajet retour (écran -> monde).
+            const float aspect {viewport.x / viewport.y};
+            const glm::mat4 inverse_vp {glm::inverse(view_projection(aspect))};
+
+            // 3) On reconstruit le rayon : deux points, l'un sur le plan proche (z=0),
+            //    l'autre sur le plan lointain (z=1). La division par w ("division
+            //    perspective") ramène ces vec4 en vraies coordonnées 3D.
+            glm::vec4 near_point {inverse_vp * glm::vec4{ndc_x, ndc_y, 0.0f, 1.0f}};
+            glm::vec4 far_point  {inverse_vp * glm::vec4{ndc_x, ndc_y, 1.0f, 1.0f}};
+            near_point /= near_point.w;
+            far_point  /= far_point.w;
+
+            const glm::vec3 origin {near_point};
+            const glm::vec3 ray {glm::normalize(glm::vec3{far_point} - glm::vec3{near_point})};
+
+            // 4) Intersection rayon / sol (plan Y=0). On cherche la distance t telle
+            //    que origin.y + t * ray.y = 0. Si ray.y ~ 0, le rayon est parallèle
+            //    au sol : pas d'intersection.
+            if (std::abs(ray.y) < 1e-6f) {
+                return std::nullopt;
+            }
+            const float t {-origin.y / ray.y};
+            if (t < 0.0f) {
+                return std::nullopt;   // le sol serait derrière la caméra
+            }
+            return origin + ray * t;   // le point touché, en (x, 0, z)
         }
 
     private:
