@@ -1,7 +1,7 @@
-// Cinder City — Copyright (c) 2026 PanDiMou. All rights reserved.
-// Proprietary and confidential. Viewing permitted; use, copying,
-// modification, and distribution prohibited without written permission.
-// See LICENSE at the repository root.
+// Cinder City — Copyright (c) 2026 PanDiMou. Tous droits réservés.
+// Propriétaire et confidentiel. Consultation autorisée ; utilisation, copie,
+// modification et distribution interdites sans autorisation écrite.
+// Voir le fichier LICENSE à la racine du dépôt.
 
 // ============================================================================
 // gpu_mesh — la géométrie prête à dessiner, DANS le GPU.

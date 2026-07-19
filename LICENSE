@@ -1,5 +1,59 @@
-Cinder City — Proprietary License
-Copyright (c) 2026 PanDiMou. All rights reserved.
+Cinder City — Licence propriétaire / Proprietary License
+Copyright (c) 2026 PanDiMou. Tous droits réservés. / All rights reserved.
+
+Ce fichier est fourni en français puis en anglais. En cas de divergence
+d'interprétation entre les deux versions, la version FRANÇAISE fait foi.
+
+This file is provided in French and then in English. In case of any discrepancy
+in interpretation between the two versions, the FRENCH version prevails.
+
+================================================================================
+FRANÇAIS
+================================================================================
+
+Le code source est rendu consultable publiquement à des fins de référence et de
+transparence uniquement. Il ne s'agit PAS d'un logiciel open source ni d'un
+logiciel libre.
+
+Aucune licence, aucun droit et aucune permission ne sont accordés à quiconque,
+sauf dans les cas expressément prévus ci-dessous.
+
+1. Autorisé
+   Vous pouvez consulter et lire le code source de ce dépôt via la plateforme
+   d'hébergement sur laquelle il est publié.
+
+2. Interdit
+   Sans l'autorisation écrite préalable du titulaire des droits d'auteur, vous
+   n'êtes PAS autorisé à :
+   (a) utiliser, exécuter, lancer, compiler ou déployer le logiciel, en tout ou
+       en partie ;
+   (b) copier, reproduire ou télécharger le code source, à l'exception des copies
+       temporaires strictement nécessaires à sa consultation dans un navigateur ;
+   (c) modifier, adapter, traduire ou créer des œuvres dérivées à partir de celui-ci ;
+   (d) distribuer, publier, accorder une sous-licence, vendre, louer ou mettre de
+       toute autre manière le logiciel ou toute œuvre dérivée à disposition d'un tiers ;
+   (e) utiliser le logiciel ou toute partie de celui-ci à des fins commerciales.
+
+3. Réserve de droits
+   Tous les droits qui ne sont pas expressément accordés par la présente sont
+   réservés au titulaire des droits d'auteur. Le titulaire des droits d'auteur
+   conserve les droits pleins et exclusifs d'utiliser, de modifier, de concéder
+   sous licence et de commercialiser ce logiciel.
+
+4. Absence de garantie
+   LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE, EXPRESSE OU
+   IMPLICITE, Y COMPRIS, SANS S'Y LIMITER, LES GARANTIES DE QUALITÉ MARCHANDE,
+   D'ADÉQUATION À UN USAGE PARTICULIER ET D'ABSENCE DE CONTREFAÇON. EN AUCUN CAS
+   LE TITULAIRE DES DROITS D'AUTEUR NE POURRA ÊTRE TENU RESPONSABLE D'UNE QUELCONQUE
+   RÉCLAMATION, DE DOMMAGES OU DE TOUTE AUTRE RESPONSABILITÉ, QUE CE SOIT DANS LE
+   CADRE D'UN CONTRAT, D'UN DÉLIT OU AUTREMENT, DÉCOULANT DU LOGICIEL, DE SON
+   UTILISATION OU DE TOUTE AUTRE MANIPULATION DU LOGICIEL, OU EN LIEN AVEC CEUX-CI.
+
+Pour toute demande de licence, contactez le titulaire des droits d'auteur.
+
+================================================================================
+ENGLISH
+================================================================================
 
 This source code is made publicly viewable for reference and transparency
 purposes only. It is NOT open source and is NOT free software.
