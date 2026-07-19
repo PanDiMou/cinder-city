@@ -46,6 +46,9 @@ namespace cinder {
             process_events();      // 1. lire les entrées (clavier, souris, fermeture)
             world_.update(delta);  // 2. mettre à jour les entités
             update_camera(delta);  // 3. déplacer la caméra
+            // L'UI n'écoute la souris qu'en mode curseur : en mode vol, la souris
+            // appartient à la caméra (évite qu'un clic touche l'UI par accident).
+            ui_.set_mouse_enabled(!fly_mode_);
             ui_.begin_frame();     // 4. démarrer l'interface de cette frame...
             build_ui();            //    ...et la construire
             render();              // 5. tout dessiner à l'écran

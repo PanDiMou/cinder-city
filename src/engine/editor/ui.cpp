@@ -45,6 +45,19 @@ namespace cinder {
         ImGui_ImplSDL3_ProcessEvent(&event);
     }
 
+    // Active ou coupe la souris pour l'UI. En mode vol (souris capturée par la
+    // caméra), on la COUPE ici avec le drapeau NoMouse : sinon un clic maintenu
+    // pourrait quand même toucher une fenêtre ImGui. À appeler AVANT begin_frame,
+    // car ImGui lit ce drapeau au début de la frame.
+    void ui::set_mouse_enabled(const bool enabled) {
+        ImGuiIO& io {ImGui::GetIO()};
+        if (enabled) {
+            io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;   // enlève le drapeau -> souris active
+        } else {
+            io.ConfigFlags |= ImGuiConfigFlags_NoMouse;    // ajoute le drapeau -> souris ignorée
+        }
+    }
+
     // Démarre une nouvelle frame ImGui. Après ça, on peut appeler ImGui::Begin, etc.
     void ui::begin_frame() {
         ImGui_ImplSDLGPU3_NewFrame();

@@ -36,6 +36,7 @@ namespace cinder {
         ~ui();   // démonte ImGui
 
         void process_event(const SDL_Event& event);  // transmet un évènement SDL à ImGui (clics, clavier)
+        void set_mouse_enabled(bool enabled);         // active/désactive la prise en compte de la souris par l'UI
         void begin_frame();                           // démarre une nouvelle frame ImGui
         void finalize();                              // clôt la frame (ImGui::Render)
         void upload(SDL_GPUCommandBuffer* command_buffer);                          // prépare les données de dessin (VRAM)
