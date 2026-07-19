@@ -68,7 +68,7 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG) vers la VRAM | ✅ |
 | 🗺️ Scènes (données) | ![JSON](https://img.shields.io/badge/nlohmann/json-3B5998?style=flat-square) | Ville décrite en données (`city.json`), hors du code | ✅ |
 | 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
-| 🧭 Éditeur in-game | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Poser la ville à la souris, sauver la scène | 🔜 |
+| 🧭 Interface / éditeur | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Overlay ImGui intégré ; outils d'édition en cours | 🟨 |
 | 💥 Physique | ![Jolt](https://img.shields.io/badge/Jolt_Physics-E8552D?style=flat-square) | Véhicules et collisions | 🔜 |
 | 🔊 Audio | ![FMOD](https://img.shields.io/badge/FMOD-009FE3?style=flat-square) | Spatialisation et mixage | 🔜 |
 | 📊 Profilage | ![Tracy](https://img.shields.io/badge/Tracy-0E9F6E?style=flat-square) | Analyse des performances en temps réel | 🔜 |
@@ -85,7 +85,8 @@ src/engine/
 ├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · texture · renderer
 ├── assets/   fbx_loader (import FBX) · stb_image (décodage PNG) · model_catalog
 ├── scene/    camera (vol libre) · transform · scene_loader (city.json)
-└── world/    world · entity · static_prop · ground
+├── world/    world · entity · static_prop · ground
+└── editor/   ui (Dear ImGui — overlay & futur éditeur)
 ```
 
 <img src="assets/architecture.svg" width="100%" alt="Schéma d'architecture de Cinder City">
@@ -121,10 +122,15 @@ world_.spawn<static_prop>(catalog_.get("SM_Bld_Beach_Shop_01"),
                           glm::vec4 {1.0f}, material_type::textured);
 ```
 
+**Interface & navigation.** On se déplace dans la scène avec une **caméra libre**
+(vol au clavier + souris). Une couche **Dear ImGui** est intégrée par-dessus le
+rendu (seconde passe) et servira de base à l'éditeur de ville à venir.
+
 **Principes de code.** RAII systématique (chaque ressource GPU possédée et
 libérée par un objet), C++23 (concepts, `std::format`, designated initializers),
 séparation nette entre données (`city.json`), simulation (`world` / `entity`) et
-rendu (`renderer`) — pour rester maintenable et prêt au multijoueur.
+rendu (`renderer`). Le code est **intégralement commenté en français** dans une
+optique pédagogique — pour rester maintenable, relisible et prêt au multijoueur.
 
 <img src="assets/divider.svg" width="100%" alt="">
 
@@ -140,14 +146,16 @@ rendu (`renderer`) — pour rester maintenable et prêt au multijoueur.
 | ✅ | Import de modèles FBX (ufbx) + rendu texturé (palette Synty) | Fait |
 | ✅ | Ville en données — `city.json` + catalogue de modèles | Fait |
 | ✅ | Caméra libre — vol clavier (ZQSD) + souris | Fait |
-| 🟨 | Éditeur in-game (ImGui) — poser / déplacer / sauver la ville | En cours |
+| ✅ | Intégration Dear ImGui (overlay debug, rendu en 2ᵉ passe) | Fait |
+| ✅ | Base de code intégralement commentée (français, pédagogique) | Fait |
+| 🟨 | Éditeur in-game — poser / déplacer / sauver la ville | En cours |
 | ⬜ | Peupler la ville — bâtiments, véhicules, PNJ | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🧭 Un éditeur intégré pour composer la ville à la souris.
+**Prochaine étape :** 🎯 Picking souris (rayon curseur → sol) pour poser des bâtiments.
 
 ```
-Progression du socle   [■■■■■■□□□□]  60%
+Progression du socle   [■■■■■■▌□□□]  65%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">

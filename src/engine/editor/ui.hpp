@@ -3,33 +3,43 @@
 // modification, and distribution prohibited without written permission.
 // See LICENSE at the repository root.
 
+// ============================================================================
+// ui — l'interface à l'écran (panneaux, boutons...), via Dear ImGui.
+//
+// ImGui est en "mode immédiat" : on ne construit pas des boutons une fois pour
+// toutes, on redécrit toute l'interface À CHAQUE frame par des appels de fonctions.
+// Cette classe cache la mécanique d'ImGui derrière quelques méthodes simples, et
+// gère sa création/destruction en RAII.
+//
+// Enchaînement dans une frame :
+//   process_event() (pour chaque évènement) -> begin_frame() -> [décrire l'UI]
+//   -> finalize() -> upload() -> render().
+// ============================================================================
+
 #ifndef CINDER_CITY_UI_HPP
 #define CINDER_CITY_UI_HPP
 
-struct SDL_GPUDevice;
+struct SDL_GPUDevice;          // déclarations anticipées
 struct SDL_GPUCommandBuffer;
 struct SDL_GPURenderPass;
-union SDL_Event;
+union SDL_Event;               // note : SDL_Event est une "union", pas un "struct"
 
 namespace cinder {
     class graphics_device;
 
-    // Owns the Dear ImGui context and its SDL3 / SDL_gpu backends.
-    // Per frame: process_event() -> begin_frame() -> (build widgets) -> finalize()
-    // -> upload() -> render(). RAII: sets up on construction, tears down on destruction.
     class ui {
     public:
-        explicit ui(const graphics_device& device);
-        ui(const ui&) = delete;
+        explicit ui(const graphics_device& device);   // initialise ImGui + ses backends
+        ui(const ui&) = delete;              // contexte global unique -> pas de copie
         ui& operator=(const ui&) = delete;
 
-        ~ui();
+        ~ui();   // démonte ImGui
 
-        void process_event(const SDL_Event& event);  // feed an SDL event to ImGui
-        void begin_frame();                           // start a new ImGui frame
-        void finalize();                              // close the frame (ImGui::Render)
-        void upload(SDL_GPUCommandBuffer* command_buffer);                       // stage draw data
-        void render(SDL_GPUCommandBuffer* command_buffer, SDL_GPURenderPass* pass); // draw it
+        void process_event(const SDL_Event& event);  // transmet un évènement SDL à ImGui (clics, clavier)
+        void begin_frame();                           // démarre une nouvelle frame ImGui
+        void finalize();                              // clôt la frame (ImGui::Render)
+        void upload(SDL_GPUCommandBuffer* command_buffer);                          // prépare les données de dessin (VRAM)
+        void render(SDL_GPUCommandBuffer* command_buffer, SDL_GPURenderPass* pass); // dessine l'UI dans la passe
 
     private:
         SDL_GPUDevice* device_ {nullptr};

@@ -3,31 +3,45 @@
 // modification, and distribution prohibited without written permission.
 // See LICENSE at the repository root.
 
+// ============================================================================
+// shader — un petit programme qui s'exécute SUR le GPU.
+//
+// Il en existe deux "étages" (stages) qu'on utilise :
+//   - vertex   : s'exécute une fois par sommet (place les points à l'écran).
+//   - fragment : s'exécute une fois par pixel (calcule sa couleur).
+// (Voir les fichiers .vert / .frag dans shaders/.)
+//
+// Cette classe charge un shader compilé (fichier .spv) et le prépare pour le GPU.
+// ============================================================================
+
 #ifndef CINDER_CITY_SHADER_HPP
 #define CINDER_CITY_SHADER_HPP
 
 #include <string>
 
-struct SDL_GPUDevice;
+struct SDL_GPUDevice;   // déclarations anticipées
 struct SDL_GPUShader;
 
 namespace cinder {
     class graphics_device;
 
+    // Le type d'étage du shader.
     enum class shader_stage {
         vertex,
         fragment
     };
 
-    // A GPU shader loaded from a SPIR-V file and translated to the device's native format.
     class shader {
     public:
+        // Charge un shader depuis un fichier .spv, pour l'étage donné (vertex/fragment).
         shader(const graphics_device&, const std::string&, shader_stage);
-        shader(const shader&) = delete;
+
+        shader(const shader&) = delete;              // ressource GPU -> pas de copie
         shader& operator=(const shader&) = delete;
 
         ~shader();
 
+        // Renvoie le shader SDL brut (le pipeline en a besoin à sa création).
         [[nodiscard]] SDL_GPUShader* native() const noexcept { return shader_; }
 
     private:

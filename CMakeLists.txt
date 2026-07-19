@@ -1,19 +1,19 @@
 cmake_minimum_required(VERSION 3.28)
 
-# C is needed alongside C++ because ufbx ships as a single C source file.
+# Le C est nécessaire en plus du C++ car ufbx est livré comme un unique fichier source C.
 project(CinderCity LANGUAGES C CXX)
 
-# Language standard: strict C++23, no compiler-specific extensions.
+# Standard du langage : C++23 strict, sans extensions propres au compilateur.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ---------------------------------------------------------------------------
-# Dependencies (fetched and built from source, pinned to fixed versions).
+# Dépendances (récupérées et compilées depuis les sources, épinglées à des versions fixes).
 # ---------------------------------------------------------------------------
 include(FetchContent)
 
-# SDL3: windowing, input and the GPU rendering API.
+# SDL3 : fenêtrage, entrées et l'API de rendu GPU.
 FetchContent_Declare(
         SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
@@ -21,7 +21,7 @@ FetchContent_Declare(
         GIT_SHALLOW    ON
 )
 
-# GLM: header-only linear algebra (matrices, quaternions).
+# GLM : algèbre linéaire header-only (matrices, quaternions).
 FetchContent_Declare(
         glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
@@ -30,13 +30,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# Build SDL3 as a shared library only, without its test suite.
+# Compile SDL3 uniquement en bibliothèque partagée, sans sa suite de tests.
 set(SDL_SHARED ON  CACHE BOOL "" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 set(SDL_TEST   OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(SDL3)
 
-# SDL_shadercross: translates SPIR-V to the native format (Metal/MSL on Mac) at runtime.
+# SDL_shadercross : traduit le SPIR-V vers le format natif (Metal/MSL sur Mac) au runtime.
 FetchContent_Declare(
         SDL3_shadercross
         GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
@@ -45,12 +45,12 @@ FetchContent_Declare(
 )
 set(SDLSHADERCROSS_SHARED   OFF CACHE BOOL "" FORCE)
 set(SDLSHADERCROSS_STATIC   ON  CACHE BOOL "" FORCE)
-set(SDLSHADERCROSS_VENDORED ON  CACHE BOOL "" FORCE)  # bundle SPIRV-Cross
-set(SDLSHADERCROSS_DXC      OFF CACHE BOOL "" FORCE)  # no HLSL/DXC: we start from SPIR-V
-set(SDLSHADERCROSS_CLI      OFF CACHE BOOL "" FORCE)  # no command-line tool
+set(SDLSHADERCROSS_VENDORED ON  CACHE BOOL "" FORCE)  # embarque SPIRV-Cross
+set(SDLSHADERCROSS_DXC      OFF CACHE BOOL "" FORCE)  # pas de HLSL/DXC : on part du SPIR-V
+set(SDLSHADERCROSS_CLI      OFF CACHE BOOL "" FORCE)  # pas d'outil en ligne de commande
 FetchContent_MakeAvailable(SDL3_shadercross)
 
-# ufbx: single-source FBX loader (used to import 3D models).
+# ufbx : chargeur FBX en un seul fichier (sert à importer les modèles 3D).
 FetchContent_Declare(
         ufbx
         GIT_REPOSITORY https://github.com/ufbx/ufbx.git
@@ -59,7 +59,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(ufbx)
 
-# stb: single-header image loader (used to decode PNG textures).
+# stb : chargeur d'images header-only (sert à décoder les textures PNG).
 FetchContent_Declare(
         stb
         GIT_REPOSITORY https://github.com/nothings/stb.git
@@ -67,7 +67,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
-# nlohmann/json: header-only JSON parser (used for scene files).
+# nlohmann/json : parseur JSON header-only (sert aux fichiers de scène).
 FetchContent_Declare(
         nlohmann_json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
@@ -77,7 +77,7 @@ FetchContent_Declare(
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(nlohmann_json)
 
-# Dear ImGui: immediate-mode UI for the in-engine editor.
+# Dear ImGui : UI en mode immédiat pour l'éditeur intégré.
 FetchContent_Declare(
         imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -109,21 +109,21 @@ add_executable(CinderCity
         src/engine/editor/ui.cpp
 )
 
-# Include from the source root so headers use full "engine/..." paths.
+# Inclut depuis la racine des sources pour que les headers utilisent des chemins complets "engine/...".
 target_include_directories(CinderCity PRIVATE src)
 target_link_libraries(CinderCity PRIVATE SDL3::SDL3 glm::glm SDL3_shadercross::SDL3_shadercross nlohmann_json::nlohmann_json)
 
-# Match GLM's clip-space depth convention to the GPU backend ([0, 1]).
+# Aligne la convention de profondeur clip-space de GLM sur le backend GPU ([0, 1]).
 target_compile_definitions(CinderCity PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
 
-# ufbx has no CMake target: compile its single source into ours directly.
+# ufbx n'a pas de cible CMake : on compile son unique source directement dans la nôtre.
 target_sources(CinderCity PRIVATE ${ufbx_SOURCE_DIR}/ufbx.c)
 target_include_directories(CinderCity PRIVATE ${ufbx_SOURCE_DIR})
 
-# stb is header-only: expose its headers (the implementation lives in stb_image_impl.cpp).
+# stb est header-only : on expose ses headers (l'implémentation est dans stb_image_impl.cpp).
 target_include_directories(CinderCity PRIVATE ${stb_SOURCE_DIR})
 
-# Dear ImGui has no CMake target: compile its core + SDL3/SDL_gpu backends into ours.
+# Dear ImGui n'a pas de cible CMake : on compile son cœur + les backends SDL3/SDL_gpu dans la nôtre.
 target_sources(CinderCity PRIVATE
         ${imgui_SOURCE_DIR}/imgui.cpp
         ${imgui_SOURCE_DIR}/imgui_draw.cpp

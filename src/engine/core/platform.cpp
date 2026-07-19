@@ -10,12 +10,19 @@
 #include <string>
 
 namespace cinder {
+    // Constructeur : on démarre SDL avec le sous-système vidéo (fenêtre + affichage).
     platform::platform() {
+        // SDL_Init renvoie "faux" en cas d'échec. Si ça échoue, on ne peut rien
+        // faire d'utile, donc on lève une exception (throw) : elle remontera
+        // jusqu'au try/catch de main().
         if (!SDL_Init(SDL_INIT_VIDEO)) {
-            throw std::runtime_error(std::string{"SDL_Init: "} + SDL_GetError());
+            // SDL_GetError() donne la raison précise de l'échec, côté SDL.
+            throw std::runtime_error(std::string{"Échec de SDL_Init : "} + SDL_GetError());
         }
     }
 
+    // Destructeur : appelé automatiquement quand l'objet `platform` disparaît.
+    // On éteint proprement SDL. C'est la moitié "libération" du RAII.
     platform::~platform() {
         SDL_Quit();
     }

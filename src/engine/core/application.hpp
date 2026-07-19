@@ -3,6 +3,18 @@
 // modification, and distribution prohibited without written permission.
 // See LICENSE at the repository root.
 
+// ============================================================================
+// application — le chef d'orchestre du jeu.
+//
+// C'est ici que tout se rejoint : la fenêtre, le GPU, la scène, la caméra, l'UI.
+// La méthode run() contient la "boucle de jeu" : lire les entrées -> mettre à
+// jour -> dessiner, répété des dizaines de fois par seconde jusqu'à la fermeture.
+//
+// L'ORDRE des membres tout en bas est important : ils sont construits de haut en
+// bas, et détruits dans l'ordre inverse. Ex : `platform` (SDL) doit exister
+// AVANT `window`, et être détruit APRÈS. On respecte donc les dépendances.
+// ============================================================================
+
 #ifndef CINDER_CITY_APPLICATION_HPP
 #define CINDER_CITY_APPLICATION_HPP
 
@@ -20,28 +32,34 @@
 namespace cinder {
     class application {
     public:
-        application();
-        application(const application&) = delete;
+        application();   // met tout en place (fenêtre, GPU, chargement de la scène)
+
+        application(const application&) = delete;              // pas de copie : c'est un objet unique
         application& operator=(const application&) = delete;
 
-        void run();
-    private:
-        void process_events();
-        void update_camera(float delta_seconds);
-        void build_ui() const;
-        void render();
+        void run();      // lance la boucle de jeu (bloque jusqu'à la fermeture)
 
-        platform        platform_;
-        window          window_;
-        graphics_device graphics_device_ {window_};
-        renderer        renderer_ {graphics_device_};
-        ground          ground_;
-        gpu_mesh        ground_mesh_ {graphics_device_, ground_.geometry()};
-        model_catalog   catalog_ {graphics_device_};   // loads FBX models once, on demand
-        world           world_;
-        camera          camera_;
-        ui              ui_ {graphics_device_};
-        bool            running_ {true};
+    private:
+        // Ces méthodes privées découpent le travail d'une frame (une image).
+        void process_events();               // lit clavier/souris/fermeture
+        void update_camera(float delta_seconds); // déplace la caméra selon les touches
+        void build_ui() const;               // construit l'interface ImGui de la frame
+        void render();                       // dessine le monde + l'UI à l'écran
+
+        // --- Les membres : les briques qui composent le jeu ---
+        // Rappel : ils sont initialisés dans cet ordre. Certains ont besoin d'un
+        // autre pour se construire, d'où la syntaxe {membre_dont_ils_dependent}.
+        platform        platform_;                              // démarre/arrête SDL
+        window          window_;                                // la fenêtre
+        graphics_device graphics_device_ {window_};             // le GPU (a besoin de la fenêtre)
+        renderer        renderer_ {graphics_device_};           // dessine (a besoin du GPU)
+        ground          ground_;                                // la géométrie du sol
+        gpu_mesh        ground_mesh_ {graphics_device_, ground_.geometry()}; // le sol envoyé au GPU
+        model_catalog   catalog_ {graphics_device_};            // charge les modèles FBX une seule fois, à la demande
+        world           world_;                                 // contient toutes les entités de la scène
+        camera          camera_;                                // le point de vue
+        ui              ui_ {graphics_device_};                 // l'interface (Dear ImGui)
+        bool            running_ {true};                        // devient false pour arrêter la boucle
     };
 }
 
