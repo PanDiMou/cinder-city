@@ -24,9 +24,9 @@ namespace cinder {
         // depuis le fichier de scène. Modifier city.json suffit à changer la ville.
         load_scene("assets/city.json", world_, catalog_);
 
-        // Capture la souris : le curseur est masqué et "verrouillé", on ne reçoit
-        // que ses déplacements -> parfait pour orienter la caméra en vol libre.
-        SDL_SetWindowRelativeMouseMode(window_.native(), true);
+        // On démarre en "mode vol" : la souris est capturée et pilote la caméra.
+        // La touche Tab bascule ensuite vers le "mode curseur" (pour cliquer dans l'UI).
+        set_fly_mode(true);
     }
 
     // run() = la BOUCLE DE JEU. Elle tourne tant que running_ est vrai.
@@ -69,13 +69,19 @@ namespace cinder {
                 case SDL_EVENT_KEY_DOWN:        // une touche est enfoncée
                     if (event.key.key == SDLK_ESCAPE) {
                         running_ = false;       // Échap ferme le jeu
+                    } else if (event.key.key == SDLK_TAB) {
+                        set_fly_mode(!fly_mode_); // Tab bascule vol <-> curseur (le "!" inverse le booléen)
                     }
                     break;
                 case SDL_EVENT_MOUSE_MOTION:    // la souris a bougé
-                    // xrel/yrel = déplacement depuis la dernière frame. Le "-" inverse
-                    // le sens pour que ça paraisse naturel.
-                    camera_.look(-event.motion.xrel * look_sensitivity,
-                                 -event.motion.yrel * look_sensitivity);
+                    // On ne tourne la caméra qu'en mode vol ; en mode curseur, la
+                    // souris sert à l'UI.
+                    if (fly_mode_) {
+                        // xrel/yrel = déplacement depuis la dernière frame. Le "-" inverse
+                        // le sens pour que ça paraisse naturel.
+                        camera_.look(-event.motion.xrel * look_sensitivity,
+                                     -event.motion.yrel * look_sensitivity);
+                    }
                     break;
                 default:
                     break; // les autres évènements ne nous intéressent pas ici
@@ -84,6 +90,11 @@ namespace cinder {
     }
 
     void application::update_camera(const float delta_seconds) {
+        // En mode curseur (UI), la caméra ne bouge pas : on sort tout de suite.
+        if (!fly_mode_) {
+            return;
+        }
+
         // SDL_GetKeyboardState renvoie un tableau : keys[SCANCODE] vaut vrai si la
         // touche est enfoncée MAINTENANT (état continu, contrairement aux évènements).
         const bool* keys {SDL_GetKeyboardState(nullptr)};
@@ -115,6 +126,14 @@ namespace cinder {
         ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));    // images par seconde
         ImGui::Text("Bâtiments : %zu", world_.entities().size());      // nombre d'entités
         ImGui::End();                                                  // ferme la fenêtre
+    }
+
+    // Bascule entre "mode vol" et "mode curseur".
+    void application::set_fly_mode(const bool enabled) {
+        fly_mode_ = enabled;
+        // La souris n'est capturée (relative) qu'en mode vol. En mode curseur, elle
+        // redevient un curseur normal -> on peut cliquer dans les fenêtres ImGui.
+        SDL_SetWindowRelativeMouseMode(window_.native(), enabled);
     }
 
     // Délègue tout le dessin au renderer, en lui passant la caméra, le monde et l'UI.

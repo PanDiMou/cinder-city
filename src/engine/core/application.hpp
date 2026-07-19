@@ -44,6 +44,7 @@ namespace cinder {
         void process_events();               // lit clavier/souris/fermeture
         void update_camera(float delta_seconds); // déplace la caméra selon les touches
         void build_ui() const;               // construit l'interface ImGui de la frame
+        void set_fly_mode(bool enabled);     // bascule "vol caméra" <-> "curseur UI"
         void render();                       // dessine le monde + l'UI à l'écran
 
         // --- Les membres : les briques qui composent le jeu ---
@@ -59,6 +60,7 @@ namespace cinder {
         world           world_;                                 // contient toutes les entités de la scène
         camera          camera_;                                // le point de vue
         ui              ui_ {graphics_device_};                 // l'interface (Dear ImGui)
+        bool            fly_mode_ {true};                       // true : la souris pilote la caméra ; false : elle pilote l'UI (Tab pour basculer)
         bool            running_ {true};                        // devient false pour arrêter la boucle
     };
 }
