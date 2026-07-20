@@ -33,7 +33,10 @@
 
 .idea
 *.spv
-/assets/models/
-/assets/textures/
+
 
 .DS_Store
+/assets/Collision/
+/assets/Models/
+/assets/Textures/
+assets/MaterialList_PolygonPalmCity.txt

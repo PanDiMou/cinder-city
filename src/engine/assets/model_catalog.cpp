@@ -7,9 +7,32 @@
 #include "engine/assets/fbx_loader.hpp"
 #include "engine/render/gpu_mesh.hpp"   // ici on a besoin du type COMPLET de gpu_mesh
 
+#include <filesystem>   // parcours récursif des dossiers (C++17+)
+#include <stdexcept>
 #include <utility>
 
 namespace cinder {
+    namespace {
+        // Les modèles sont rangés par catégorie sous "assets/Models/" (Buildings/,
+        // Vehicles/, ...). On ne connaît pas la catégorie d'un modèle depuis son seul
+        // nom : on cherche donc récursivement le fichier "<nom>.fbx" sous ce dossier.
+        // (Fait une seule fois par modèle, car le résultat est ensuite mis en cache.)
+        std::string find_model_path(const std::string& name) {
+            namespace fs = std::filesystem;
+            const std::string filename {name + ".fbx"};
+            const fs::path root {"assets/Models"};
+
+            if (fs::exists(root)) {
+                for (const fs::directory_entry& entry : fs::recursive_directory_iterator(root)) {
+                    if (entry.is_regular_file() && entry.path().filename() == filename) {
+                        return entry.path().string();
+                    }
+                }
+            }
+            throw std::runtime_error("Modèle introuvable sous assets/Models : " + filename);
+        }
+    }
+
     // Constructeur : on mémorise l'adresse du GPU (&device) pour s'en servir plus tard.
     model_catalog::model_catalog(const graphics_device& device)
         : device_ {&device} {}
@@ -28,7 +51,7 @@ namespace cinder {
 
         // Cas 2 : première demande -> on construit le chemin, on charge le FBX, on
         // l'uploade en gpu_mesh, et on range le tout dans le cache.
-        const std::string path {"assets/models/" + name + ".fbx"};
+        const std::string path {find_model_path(name)};
         // emplace insère et renvoie une paire {itérateur vers l'élément, bool}.
         // On récupère l'itérateur via un "structured binding" [entry, inserted].
         const auto [entry, inserted] {meshes_.emplace(name, std::make_unique<gpu_mesh>(*device_, load_fbx(path)))};
