@@ -31,7 +31,8 @@ namespace cinder {
     renderer::renderer(const graphics_device& device)
         : device_ {device.native()},
           window_ {device.window_handle()},
-          palette_ {device, "assets/Textures/Alts/Generic_01_A.png"} {   // charge la palette (atlas des bâtiments Background)
+          palette_ {device, "assets/Textures/Alts/Generic_01_A.png"},          // atlas de couleur des Background
+          emissive_ {device, "assets/Textures/Emissive/Generic_Emissive_01_A.png"} { // émissif (inutilisé par les Background)
 
         // Décrit COMMENT lire un sommet dans le buffer : "pitch" = taille d'un
         // sommet (on avance de sizeof(vertex) octets pour passer au suivant).
@@ -216,12 +217,13 @@ namespace cinder {
 
             // Selon le matériau, on fournit au shader fragment la bonne ressource :
             if (material == material_type::textured) {
-                // ...soit la palette (texture + sampler) pour les modèles texturés.
-                const SDL_GPUTextureSamplerBinding binding {
-                    .texture = palette_.native(),
-                    .sampler = palette_.sampler()
+                // Deux textures pour les modèles : la palette (couleur) et l'émissif
+                // (lumière des fenêtres). Le shader fait palette + émissif.
+                const SDL_GPUTextureSamplerBinding bindings[2] {
+                    {.texture = palette_.native(),  .sampler = palette_.sampler()},
+                    {.texture = emissive_.native(), .sampler = emissive_.sampler()}
                 };
-                SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
+                SDL_BindGPUFragmentSamplers(pass, 0, bindings, 2);
             } else {
                 // ...soit une couleur unie pour solid_color / grid_floor.
                 const glm::vec4 color_uniform {entity->color()};

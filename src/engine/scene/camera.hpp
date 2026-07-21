@@ -109,11 +109,15 @@ namespace cinder {
                     std::cos(pitch_) * std::cos(yaw_)};
         }
 
-        glm::vec3 position_ {0.0f, 12.0f, -30.0f};  // point de vue initial (x, y, z)
+        // Point de vue initial : au DÉBUT de l'avenue, au milieu de la route (z=0),
+        // en HAUTEUR (y=10) et un peu en retrait (x=-122) pour une vue plongeante.
+        glm::vec3 position_ {-122.0f, 10.0f, 0.0f};
         glm::vec3 up_       {0.0f, 1.0f, 0.0f};      // "le haut" du monde = axe Y
 
-        float yaw_   {0.0f};                  // angle horizontal (radians), 0 = regarde vers +Z
-        float pitch_ {glm::radians(-15.0f)};  // angle vertical (radians), négatif = regarde vers le bas
+        // yaw = +90° -> on regarde vers +X, LE LONG de l'avenue (bâtiments à gauche/droite).
+        // pitch négatif = regard PLONGEANT vers le bas, pour dominer la rue au départ.
+        float yaw_   {glm::radians(90.0f)};    // angle horizontal (radians)
+        float pitch_ {glm::radians(-20.0f)};   // angle vertical (radians), négatif = vers le bas
 
         float speed_ {25.0f};                 // vitesse de vol (mètres par seconde)
 

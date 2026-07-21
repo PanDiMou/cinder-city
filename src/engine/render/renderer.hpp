@@ -54,6 +54,7 @@ namespace cinder {
 
         SDL_GPUTexture* depth_ {nullptr};   // "buffer de profondeur" : gère quel objet est devant l'autre
         texture palette_;                   // la palette de couleurs partagée par les modèles
+        texture emissive_;                  // l'émissif (fenêtres/enseignes allumées), ajouté par-dessus
     };
 }
 
