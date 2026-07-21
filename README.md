@@ -88,7 +88,8 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 🧬 Shaders | ![shadercross](https://img.shields.io/badge/SDL__shadercross-AC162C?style=flat-square) | Traduction SPIR-V → format natif au runtime | ✅ |
 | 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D (matrices, quaternions) | ✅ |
 | 📦 Import de modèles | ![ufbx](https://img.shields.io/badge/ufbx-6C4AB6?style=flat-square) | Chargement des modèles FBX (mètres, Y-up, UV) | ✅ |
-| 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG) vers la VRAM | ✅ |
+| 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG / TGA) vers la VRAM | ✅ |
+| 🌃 Émissif | ![GLSL](https://img.shields.io/badge/GLSL-4B8BBE?style=flat-square) | Fenêtres et enseignes lumineuses (palette + émissif additionnés) | ✅ |
 | 🗺️ Scènes (données) | ![JSON](https://img.shields.io/badge/nlohmann/json-3B5998?style=flat-square) | Ville décrite en données (`city.json`), hors du code | ✅ |
 | 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
 | 🧭 Éditeur in-game | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Poser / sélectionner / éditer / sauver la ville à la souris | ✅ |
@@ -123,7 +124,10 @@ Chaque géométrie est portée par une **entité** (un `transform`, une couleur 
 parcourt le monde et dessine chaque entité en sélectionnant le **pipeline
 correspondant à son matériau** : `solid_color` pour les objets unis, `grid_floor`
 pour le sol quadrillé, et `textured` pour les modèles échantillonnés dans une
-**palette** (texture Synty).
+**palette** (atlas Synty). Le pipeline texturé lie **deux textures** : l'atlas de
+couleur et son **émissif** — le shader les additionne (`base + lueur`), ce qui
+allume fenêtres et enseignes là où l'atlas émissif en contient. Un interrupteur
+dans `textured.frag` permet de couper la lueur sans toucher au code C++.
 
 **La ville en données, pas en code.** La disposition de la ville ne vit plus dans
 le C++ : elle est décrite dans un fichier de scène **`city.json`** (une liste
@@ -132,15 +136,19 @@ au démarrage pour peupler le monde. Ajouter ou déplacer un bâtiment se fait e
 éditant ce fichier — **sans recompiler**. C'est la fondation du futur éditeur.
 
 ```json
-{ "model": "SM_Bld_Beach_Shop_01", "position": [10, 0, 0], "rotation_y": 90 }
+{ "model": "SM_Gen_Bld_Background_01", "position": [10, 0, 0], "rotation_y": 90, "scale": 1.0 }
 ```
+
+La scène actuelle en est la preuve : l'**avenue de démonstration** (deux rangées
+de façades face à face, espacées selon la largeur réelle de chaque modèle) a été
+**générée en données** — 28 instances écrites dans `city.json`, zéro ligne de C++.
 
 **Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh, couleur,
 matériau, `update()`) se spécialise par héritage : `static_prop` (immobile),
 bientôt `vehicle`, `pedestrian`… Ajouter un objet au monde tient en une ligne :
 
 ```cpp
-world_.spawn<static_prop>(catalog_.get("SM_Bld_Beach_Shop_01"),
+world_.spawn<static_prop>(catalog_.get("SM_Gen_Bld_Background_01"),
                           transform {.position = {10, 0, 0}},
                           glm::vec4 {1.0f}, material_type::textured);
 ```
@@ -150,13 +158,40 @@ world_.spawn<static_prop>(catalog_.get("SM_Bld_Beach_Shop_01"),
 une couche **Dear ImGui**. Le picking (rayon curseur → sol) permet de **poser** un
 modèle au clic, de **sélectionner** un bâtiment existant, puis de le **déplacer,
 tourner, redimensionner ou supprimer** — le tout **sauvegardé** dans `city.json`.
-`Tab` bascule entre pilotage caméra et interaction avec l'interface.
+`Tab` bascule entre pilotage caméra et interaction avec l'interface. Le panneau
+est organisé en **sections repliables** (Infos · Outil · Modèles · Sélection ·
+Scène), avec une **barre de recherche** qui filtre la palette de modèles en direct
+et une liste défilante — prêt pour des centaines de modèles.
 
 **Principes de code.** RAII systématique (chaque ressource GPU possédée et
 libérée par un objet), C++23 (concepts, `std::format`, designated initializers),
 séparation nette entre données (`city.json`), simulation (`world` / `entity`) et
 rendu (`renderer`). Le code est **intégralement commenté en français** dans une
 optique pédagogique — pour rester maintenable, relisible et prêt au multijoueur.
+
+<img src="assets/divider.svg" width="100%" alt="">
+
+## 📁 Organisation du dépôt
+
+```
+cinder-city/
+├── src/engine/          le moteur (voir Architecture ci-dessus)
+├── shaders/             GLSL source + SPIR-V compilés (.spv)
+├── assets/              ⚠ gitignoré — contenus propriétaires (voir ci-dessous)
+│   ├── Models/          .fbx triés par catégorie (Buildings, Props, Vehicles…)
+│   ├── Textures/        atlas & textures triés (Alts, Emissive, Buildings…)
+│   ├── Collision/       meshes de collision (physique, plus tard)
+│   └── city.json        la scène — seule donnée versionnée de ce dossier
+├── docs/screenshots/    captures datées (AAAA-MM-JJ_description.png)
+└── .github/scripts/     outillage (compteur de lignes du README)
+```
+
+**Assets propriétaires.** Les modèles et textures proviennent des packs
+**Synty POLYGON** (Palm City / Generic), sous licence commerciale : ils ne sont
+**pas inclus** dans le dépôt (`assets/` est gitignoré, seule `city.json` est
+versionnée). Pour lancer le jeu, il faut posséder ces packs et déposer leurs
+`SourceFiles` dans `assets/` — les modèles sont ensuite triés par catégorie et
+référencés **par nom** dans `city.json`, jamais par chemin en dur dans le code.
 
 <img src="assets/divider.svg" width="100%" alt="">
 
@@ -176,14 +211,19 @@ optique pédagogique — pour rester maintenable, relisible et prêt au multijou
 | ✅ | Base de code intégralement commentée (français, pédagogique) | Fait |
 | ✅ | Picking souris (rayon curseur → sol) | Fait |
 | ✅ | Éditeur in-game — poser / sélectionner / éditer / sauver la ville | Fait |
-| ⬜ | Surlignage de la sélection + import de plus de modèles | À venir |
+| ✅ | Assets triés par catégorie + tri des modèles 100 % texturables | Fait |
+| ✅ | Rendu émissif — fenêtres/enseignes lumineuses (2 textures additionnées) | Fait |
+| ✅ | Avenue de démonstration générée en données (28 façades placées au mètre) | Fait |
+| ✅ | Éditeur organisé — sections repliables, recherche, panneau ancré | Fait |
+| ⬜ | Multi-matériaux par sous-mesh — chaque partie d'un modèle avec sa texture | À venir |
+| ⬜ | Route au sol + surlignage de la sélection | À venir |
 | ⬜ | Peupler la ville — véhicules, PNJ | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🏙️ Enrichir le catalogue et peupler la ville.
+**Prochaine étape :** 🏙️ Le rendu multi-matériaux, puis peupler la ville.
 
 ```
-Progression du socle   [■■■■■■■▌□□]  75%
+Progression du socle   [■■■■■■■■□□]  80%
 ```
 
 <img src="assets/divider.svg" width="100%" alt="">
@@ -196,35 +236,41 @@ Progression du socle   [■■■■■■■▌□□]  75%
 - **CMake ≥ 3.28**
 - **`glslc`** pour compiler les shaders (paquet `shaderc`) — sur macOS : `brew install shaderc`
 
-SDL3, GLM, SDL_shadercross, ufbx, stb_image et nlohmann/json sont récupérés et
-compilés automatiquement par CMake.
+SDL3, GLM, SDL_shadercross, ufbx, stb_image, nlohmann/json et **Dear ImGui**
+sont récupérés et compilés automatiquement par CMake (`FetchContent`, versions
+épinglées).
 
 **Compiler les shaders** (GLSL → SPIR-V), puis le projet :
 
 ```bash
-glslc shaders/solid_color.vert -o shaders/solid_color.vert.spv
-glslc shaders/solid_color.frag -o shaders/solid_color.frag.spv
-glslc shaders/grid_floor.vert  -o shaders/grid_floor.vert.spv
-glslc shaders/grid_floor.frag  -o shaders/grid_floor.frag.spv
-glslc shaders/textured.vert    -o shaders/textured.vert.spv
-glslc shaders/textured.frag    -o shaders/textured.frag.spv
+for s in shaders/*.vert shaders/*.frag; do glslc "$s" -o "$s.spv"; done
 
 cmake -S . -B build
 cmake --build build -j
 ```
 
+> ⚠ À refaire après **chaque modification d'un shader** : le moteur charge les
+> `.spv`, pas les sources GLSL. Un `.spv` désynchronisé provoque une erreur de
+> binding au lancement.
+
 Lance l'exécutable **depuis la racine du projet** — les shaders `.spv` ainsi que
 la scène, les modèles et les textures du dossier `assets/` y sont cherchés au
-chargement.
+chargement. Sans les packs Synty dans `assets/` (voir plus haut), le programme
+s'arrête au chargement de la palette.
 
 **Contrôles**
 
-- **Navigation (mode vol) :** `ZQSD` pour se déplacer, la souris pour regarder,
+- Au lancement, la caméra démarre **en haut de l'avenue**, en vue plongeante,
+  prête à descendre la rue.
+- **Navigation (mode vol) :** `ZQSD` pour se déplacer (scancodes physiques —
+  fonctionne aussi en WASD sur QWERTY), la souris pour regarder,
   `Espace` / `Shift` pour monter / descendre.
-- **`Tab`** : bascule entre pilotage caméra et interaction avec l'interface.
+- **`Tab`** : bascule entre pilotage caméra et interaction avec l'interface
+  (en mode vol, la souris est capturée et l'UI ne reçoit aucun clic).
 - **Éditeur (mode curseur) :** outil *Placer* → clic gauche pour poser le modèle
-  choisi ; outil *Sélectionner* → clic sur un bâtiment pour l'éditer (déplacer,
-  tourner, redimensionner, supprimer), puis *Sauvegarder*.
+  choisi (filtrable via la barre de recherche) ; outil *Sélectionner* → clic sur
+  un bâtiment pour l'éditer (déplacer, tourner, redimensionner, supprimer), puis
+  *Sauvegarder* — *Recharger* annule les modifications non sauvées.
 - **`Échap`** : quitter.
 
 <img src="assets/divider.svg" width="100%" alt="">
