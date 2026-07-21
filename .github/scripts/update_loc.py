@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Cinder City — compte les lignes de code du projet et met à jour le bloc
 # marqué (<!-- LOC:START --> ... <!-- LOC:END -->) dans le README.
-# Lancé automatiquement par .github/workflows/loc.yml à chaque push.
+# Usage MANUEL, depuis la racine du dépôt :  python3 .github/scripts/update_loc.py
+# (La mise à jour du README part ensuite dans ton propre commit.)
 
 import os
 import re
@@ -52,8 +53,8 @@ def main():
         "<!-- LOC:START -->\n"
         f"{badge}\n\n"
         + "\n".join(table) + "\n\n"
-        "<sub>Compté automatiquement à chaque push par "
-        "`.github/workflows/loc.yml`.</sub>\n"
+        "<sub>Mise à jour via `python3 .github/scripts/update_loc.py` "
+        "(lancé à la main).</sub>\n"
         "<!-- LOC:END -->"
     )
 

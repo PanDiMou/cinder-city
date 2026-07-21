@@ -34,6 +34,28 @@ namespace cinder {
           palette_ {device, "assets/Textures/Alts/Generic_01_A.png"},          // atlas de couleur des Background
           emissive_ {device, "assets/Textures/Emissive/Generic_Emissive_01_A.png"} { // émissif (inutilisé par les Background)
 
+        // Le buffer de profondeur : une image invisible qui stocke, pour chaque
+        // pixel, la distance de l'objet le plus proche déjà dessiné. C'est ce qui
+        // évite qu'un objet lointain s'affiche par-dessus un objet proche.
+        int width {0};
+        int height {0};
+        SDL_GetWindowSizeInPixels(window_, &width, &height);
+
+        SDL_GPUTextureCreateInfo depth_info {};
+        depth_info.type = SDL_GPU_TEXTURETYPE_2D;
+        depth_info.format = depth_format;
+        depth_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+        depth_info.width = static_cast<Uint32>(width);
+        depth_info.height = static_cast<Uint32>(height);
+        depth_info.layer_count_or_depth = 1;
+        depth_info.num_levels = 1;
+        depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
+
+        depth_ = SDL_CreateGPUTexture(device_, &depth_info);
+        if (depth_ == nullptr) {
+            throw std::runtime_error(std::string{"Échec de SDL_CreateGPUTexture (depth) : "} + SDL_GetError());
+        }
+
         // Décrit COMMENT lire un sommet dans le buffer : "pitch" = taille d'un
         // sommet (on avance de sizeof(vertex) octets pour passer au suivant).
         constexpr SDL_GPUVertexBufferDescription vertex_buffer {
@@ -101,32 +123,6 @@ namespace cinder {
         solid_color_pipeline_ = make_pipeline("shaders/solid_color.vert.spv", "shaders/solid_color.frag.spv");
         grid_floor_pipeline_ = make_pipeline("shaders/grid_floor.vert.spv", "shaders/grid_floor.frag.spv");
         textured_pipeline_ = make_pipeline("shaders/textured.vert.spv", "shaders/textured.frag.spv");
-
-        // Le buffer de profondeur : une image invisible qui stocke, pour chaque
-        // pixel, la distance de l'objet le plus proche déjà dessiné. C'est ce qui
-        // évite qu'un objet lointain s'affiche par-dessus un objet proche.
-        int width {0};
-        int height {0};
-        SDL_GetWindowSizeInPixels(window_, &width, &height);
-
-        SDL_GPUTextureCreateInfo depth_info {};
-        depth_info.type = SDL_GPU_TEXTURETYPE_2D;
-        depth_info.format = depth_format;
-        depth_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
-        depth_info.width = static_cast<Uint32>(width);
-        depth_info.height = static_cast<Uint32>(height);
-        depth_info.layer_count_or_depth = 1;
-        depth_info.num_levels = 1;
-        depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-
-        depth_ = SDL_CreateGPUTexture(device_, &depth_info);
-        if (depth_ == nullptr) {
-            // Échec en plein constructeur -> on libère à la main les pipelines déjà créés.
-            SDL_ReleaseGPUGraphicsPipeline(device_, textured_pipeline_);
-            SDL_ReleaseGPUGraphicsPipeline(device_, grid_floor_pipeline_);
-            SDL_ReleaseGPUGraphicsPipeline(device_, solid_color_pipeline_);
-            throw std::runtime_error(std::string{"Échec de SDL_CreateGPUTexture (depth) : "} + SDL_GetError());
-        }
     }
 
     // ---- DESTRUCTEUR : libère les ressources (ordre inverse) ----

@@ -13,6 +13,7 @@
 #include <cstring>       // std::memcpy
 #include <stdexcept>
 #include <string>
+#include <memory>    // std::unique_ptr (RAII sur les pixels stb)
 
 namespace cinder {
     texture::texture(const graphics_device& device, const std::string& path)
@@ -24,7 +25,14 @@ namespace cinder {
         int width {0};
         int height {0};
         int channels {0};
-        stbi_uc* pixels {stbi_load(path.c_str(), &width, &height, &channels, 4)};
+
+        // unique_ptr avec un DELETER personnalisé : à sa destruction, il
+        // appellera stbi_image_free au lieu de delete. La libération est ainsi
+        // garantie sur TOUS les chemins (y compris les throw), sans appel manuel.
+        const std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> pixels {
+            stbi_load(path.c_str(), &width, &height, &channels, 4), &stbi_image_free
+        };
+
         if (pixels == nullptr) {
             throw std::runtime_error("texture(" + path + ") : " + stbi_failure_reason());
         }
@@ -47,7 +55,6 @@ namespace cinder {
 
         texture_ = SDL_CreateGPUTexture(device_, &texture_info);
         if (texture_ == nullptr) {
-            stbi_image_free(pixels);   // toujours libérer les pixels avant de sortir
             throw std::runtime_error(std::string{"Échec de SDL_CreateGPUTexture : "} + SDL_GetError());
         }
 
@@ -57,17 +64,15 @@ namespace cinder {
         };
         SDL_GPUTransferBuffer* transfer {SDL_CreateGPUTransferBuffer(device_, &transfer_info)};
         if (transfer == nullptr) {
-            stbi_image_free(pixels);
             SDL_ReleaseGPUTexture(device_, texture_);
             throw std::runtime_error(std::string{"Échec de SDL_CreateGPUTransferBuffer : "} + SDL_GetError());
         }
 
-        // 4) On copie les pixels dans le buffer de transfert, puis on libère la
-        // copie RAM de stb (elle ne sert plus). ORDRE important : copier AVANT de libérer.
+        // 4) On copie les pixels dans le buffer de transfert. (La copie RAM de stb
+        // sera libérée automatiquement par le unique_ptr en fin de constructeur.)
         void* mapped {SDL_MapGPUTransferBuffer(device_, transfer, false)};
-        std::memcpy(mapped, pixels, byte_size);
+        std::memcpy(mapped, pixels.get(), byte_size);
         SDL_UnmapGPUTransferBuffer(device_, transfer);
-        stbi_image_free(pixels);
 
         // 5) Passe de copie : buffer de transfert (RAM) -> texture (VRAM).
         SDL_GPUCommandBuffer* command_buffer {SDL_AcquireGPUCommandBuffer(device_)};
