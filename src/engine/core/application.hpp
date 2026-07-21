@@ -85,13 +85,22 @@ namespace cinder {
         bool            running_ {true};                        // devient false pour arrêter la boucle
 
         // Palette de l'éditeur : les modèles qu'on peut poser, et celui sélectionné.
-        // (Ils partagent tous la même texture de palette que celle chargée par le renderer.)
+        // Ici, les bâtiments d'arrière-plan Synty. Ils utilisent TOUS l'atlas
+        // "Generic_01_A" -> c'est celui que le renderer charge comme palette globale.
         std::vector<std::string> model_list_ {
-            "SM_Bld_Beach_Shop_01",
-            "SM_Bld_Beach_Shop_02",
-            "SM_Bld_Beach_Shop_03"
+            "SM_Gen_Bld_Background_01",
+            "SM_Gen_Bld_Background_02",
+            "SM_Gen_Bld_Background_03",
+            "SM_Gen_Bld_Background_04",
+            "SM_Gen_Bld_Background_05",
+            "SM_Gen_Bld_Background_06",
+            "SM_Gen_Bld_Background_07",
+            "SM_Gen_Bld_Background_08",
+            "SM_Gen_Bld_Background_09",
+            "SM_Gen_Bld_Background_10",
+            "SM_Gen_Bld_Background_11"
         };
-        std::string              selected_model_ {"SM_Bld_Beach_Shop_01"};
+        std::string              selected_model_ {"SM_Gen_Bld_Background_01"};
 
         // La scène en mémoire : la liste des bâtiments posés. C'est la SOURCE DE
         // VÉRITÉ qu'on sauvegarde. Le monde (world_) en est le reflet visible.

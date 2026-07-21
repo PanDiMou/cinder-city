@@ -31,7 +31,7 @@ namespace cinder {
     renderer::renderer(const graphics_device& device)
         : device_ {device.native()},
           window_ {device.window_handle()},
-          palette_ {device, "assets/Textures/Alts/PolygonPalmCity_01_A.png"} {   // charge la palette
+          palette_ {device, "assets/Textures/Alts/Generic_01_A.png"} {   // charge la palette (atlas des bâtiments Background)
 
         // Décrit COMMENT lire un sommet dans le buffer : "pitch" = taille d'un
         // sommet (on avance de sizeof(vertex) octets pour passer au suivant).
