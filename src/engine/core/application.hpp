@@ -101,6 +101,9 @@ namespace cinder {
             "SM_Gen_Bld_Background_11"
         };
         std::string              selected_model_ {"SM_Gen_Bld_Background_01"};
+        // Tampon de la barre de recherche de la palette. ImGui écrit dedans
+        // directement (tableau de char à la C, taille fixe, terminé par '\0').
+        char                     search_[128] {};
 
         // La scène en mémoire : la liste des bâtiments posés. C'est la SOURCE DE
         // VÉRITÉ qu'on sauvegarde. Le monde (world_) en est le reflet visible.

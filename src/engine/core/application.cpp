@@ -144,45 +144,72 @@ namespace cinder {
         SDL_GetMouseState(&mouse_x, &mouse_y);
         const std::optional<glm::vec3> ground {mouse_ground(mouse_x, mouse_y)};
 
+        // Position/taille PAR DÉFAUT du panneau : ancré en haut-gauche, 340 px de
+        // large. ImGuiCond_FirstUseEver = "seulement la toute première fois" : si
+        // l'utilisateur déplace/redimensionne la fenêtre ensuite, on respecte son choix.
+        ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(340.0f, 560.0f), ImGuiCond_FirstUseEver);
+
         // Style "mode immédiat" : on décrit l'UI à chaque frame par des appels.
         ImGui::Begin("Cinder City");                                   // ouvre une fenêtre
-        ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));    // images par seconde
-        ImGui::Text("Bâtiments : %zu", instances_.size());            // nombre de bâtiments posés (hors sol)
-        if (ground) {                                      // has_value() : y a-t-il un point ?
-            ImGui::Text("Souris au sol : (%.1f, %.1f)", ground->x, ground->z);
-        } else {
-            ImGui::Text("Souris au sol : —");                          // rayon parallèle au sol / vers le ciel
-        }
 
-        // --- Outil actif : poser ou sélectionner ---
-        ImGui::SeparatorText("Outil");
-        // RadioButton renvoie vrai au clic ; on change alors l'outil.
-        if (ImGui::RadioButton("Placer", tool_ == tool::place)) {
-            tool_ = tool::place;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Sélectionner", tool_ == tool::select)) {
-            tool_ = tool::select;
-        }
-
-        // --- Palette de modèles (utile en mode Placer) ---
-        ImGui::SeparatorText("Modèles");
-        for (const std::string& model : model_list_) {
-            // ImGui::Selectable dessine une ligne cliquable. Son 2e argument dit si
-            // elle est "sélectionnée" (surlignée). Elle renvoie vrai au clic ->
-            // on met alors ce modèle comme sélection courante.
-            if (ImGui::Selectable(model.c_str(), selected_model_ == model)) {
-                selected_model_ = model;
+        // --- Section Infos (repliable). CollapsingHeader renvoie vrai si la section
+        // est DÉPLIÉE ; DefaultOpen = ouverte au premier lancement. ---
+        if (ImGui::CollapsingHeader("Infos", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));    // images par seconde
+            ImGui::Text("Bâtiments : %zu", instances_.size());            // posés (hors sol)
+            if (ground) {
+                ImGui::Text("Souris au sol : (%.1f, %.1f)", ground->x, ground->z);
+            } else {
+                ImGui::Text("Souris au sol : —");   // rayon parallèle au sol / vers le ciel
             }
         }
-        ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol.");
 
-        // --- Panneau d'édition du bâtiment sélectionné ---
-        // On vérifie que l'indice est valide (>= 0 et dans les bornes de la liste).
-        if (selected_index_ >= 0 && selected_index_ < static_cast<int>(instances_.size())) {
+        // --- Section Outil : poser ou sélectionner ---
+        if (ImGui::CollapsingHeader("Outil", ImGuiTreeNodeFlags_DefaultOpen)) {
+            // RadioButton renvoie vrai au clic ; on change alors l'outil.
+            if (ImGui::RadioButton("Placer", tool_ == tool::place)) {
+                tool_ = tool::place;
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton("Sélectionner", tool_ == tool::select)) {
+                tool_ = tool::select;
+            }
+        }
+
+        // --- Section Modèles : recherche + liste défilante ---
+        if (ImGui::CollapsingHeader("Modèles", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("Sélection : %s", selected_model_.c_str());
+
+            // Barre de recherche : filtre la liste par son texte. "##" = identifiant
+            // ImGui sans étiquette visible ; le "hint" est le texte grisé d'aide.
+            ImGui::SetNextItemWidth(-1.0f);   // prend toute la largeur disponible
+            ImGui::InputTextWithHint("##recherche", "rechercher...", search_, sizeof(search_));
+
+            // Zone DÉFILANTE de hauteur fixe : la liste ne pousse pas le reste du
+            // panneau, elle défile à l'intérieur (indispensable avec beaucoup de modèles).
+            if (ImGui::BeginChild("liste_modeles", ImVec2(0.0f, 160.0f), ImGuiChildFlags_Borders)) {
+                const std::string filter {search_};   // texte tapé (peut être vide)
+                for (const std::string& model : model_list_) {
+                    // find() renvoie npos si le filtre n'apparaît pas dans le nom ->
+                    // on saute ce modèle. Filtre vide = tout passe.
+                    if (!filter.empty() && model.find(filter) == std::string::npos) {
+                        continue;
+                    }
+                    if (ImGui::Selectable(model.c_str(), selected_model_ == model)) {
+                        selected_model_ = model;
+                    }
+                }
+            }
+            ImGui::EndChild();   // TOUJOURS appelé, même si BeginChild a renvoyé faux
+            ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol.");
+        }
+
+        // --- Section Bâtiment sélectionné (visible seulement si sélection valide) ---
+        if (selected_index_ >= 0 && selected_index_ < static_cast<int>(instances_.size())
+            && ImGui::CollapsingHeader("Bâtiment sélectionné", ImGuiTreeNodeFlags_DefaultOpen)) {
             scene_instance& selected {instances_[static_cast<std::size_t>(selected_index_)]};
 
-            ImGui::SeparatorText("Bâtiment sélectionné");
             ImGui::Text("%s", selected.model.c_str());
 
             // DragFloat(3) = un champ qu'on modifie en glissant la souris dessus.
@@ -207,15 +234,16 @@ namespace cinder {
             }
         }
 
-        // --- Sauvegarde / rechargement de la scène ---
-        ImGui::SeparatorText("Scène");
-        // ImGui::Button renvoie vrai la frame où on clique dessus.
-        if (ImGui::Button("Sauvegarder")) {
-            save();
-        }
-        ImGui::SameLine();   // met le bouton suivant sur la MÊME ligne
-        if (ImGui::Button("Recharger")) {
-            reload();
+        // --- Section Scène : sauvegarde / rechargement ---
+        if (ImGui::CollapsingHeader("Scène", ImGuiTreeNodeFlags_DefaultOpen)) {
+            // ImGui::Button renvoie vrai la frame où on clique dessus.
+            if (ImGui::Button("Sauvegarder")) {
+                save();
+            }
+            ImGui::SameLine();   // met le bouton suivant sur la MÊME ligne
+            if (ImGui::Button("Recharger")) {
+                reload();
+            }
         }
 
         ImGui::End();                                                  // ferme la fenêtre
