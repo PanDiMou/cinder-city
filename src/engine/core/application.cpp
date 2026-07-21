@@ -20,8 +20,6 @@ namespace cinder {
 
     // Constructeur : prépare la scène de départ.
     application::application() {
-        spawn_ground();   // le sol quadrillé (il ne fait pas partie des instances sauvegardées)
-
         // On charge la liste des bâtiments depuis le fichier, puis on crée une entité
         // pour chacun. On protège avec try/catch : un fichier absent/invalide ne doit
         // pas faire planter le jeu, on démarre juste avec une scène vide.
@@ -30,9 +28,7 @@ namespace cinder {
         } catch (const std::exception& error) {
             log::warning("Scène non chargée : {}", error.what());
         }
-        for (const scene_instance& instance : instances_) {
-            spawn_instance(instance);
-        }
+        rebuild_world();
 
         // On démarre en "mode vol" : la souris est capturée et pilote la caméra.
         // La touche Tab bascule ensuite vers le "mode curseur" (pour cliquer dans l'UI).
@@ -56,9 +52,6 @@ namespace cinder {
             process_events();      // 1. lire les entrées (clavier, souris, fermeture)
             world_.update(delta);  // 2. mettre à jour les entités
             update_camera(delta);  // 3. déplacer la caméra
-            // L'UI n'écoute la souris qu'en mode curseur : en mode vol, la souris
-            // appartient à la caméra (évite qu'un clic touche l'UI par accident).
-            ui_.set_mouse_enabled(!fly_mode_);
             ui_.begin_frame();     // 4. démarrer l'interface de cette frame...
             build_ui();            //    ...et la construire
             render();              // 5. tout dessiner à l'écran
@@ -136,7 +129,7 @@ namespace cinder {
 
         // Si au moins une touche est pressée, on bouge. On normalise la direction
         // (longueur = 1) pour que se déplacer en diagonale n'aille pas plus vite.
-        if (direction.x != 0.0f || direction.y != 0.0f || direction.z != 0.0f) {
+        if (direction != glm::vec3{0.0f}) {
             camera_.move(glm::normalize(direction), delta_seconds);
         }
     }
@@ -155,7 +148,7 @@ namespace cinder {
         ImGui::Begin("Cinder City");                                   // ouvre une fenêtre
         ImGui::Text("%.1f FPS", static_cast<double>(io.Framerate));    // images par seconde
         ImGui::Text("Bâtiments : %zu", instances_.size());            // nombre de bâtiments posés (hors sol)
-        if (ground.has_value()) {                                      // has_value() : y a-t-il un point ?
+        if (ground) {                                      // has_value() : y a-t-il un point ?
             ImGui::Text("Souris au sol : (%.1f, %.1f)", ground->x, ground->z);
         } else {
             ImGui::Text("Souris au sol : —");                          // rayon parallèle au sol / vers le ciel
@@ -279,8 +272,8 @@ namespace cinder {
     // Pose le bâtiment sélectionné à l'endroit du sol pointé par (mouse_x, mouse_y).
     void application::place_building(const float mouse_x, const float mouse_y) {
         // Si le rayon ne touche pas le sol (clic vers le ciel), on ne pose rien.
-        const std::optional<glm::vec3> ground {mouse_ground(mouse_x, mouse_y)};
-        if (!ground.has_value()) {
+        const std::optional ground {mouse_ground(mouse_x, mouse_y)};
+        if (!ground) {
             return;
         }
 
@@ -293,8 +286,8 @@ namespace cinder {
 
     // Sélectionne le bâtiment le plus proche du point cliqué (dans un certain rayon).
     void application::select_building(const float mouse_x, const float mouse_y) {
-        const std::optional<glm::vec3> ground {mouse_ground(mouse_x, mouse_y)};
-        if (!ground.has_value()) {
+        const std::optional ground {mouse_ground(mouse_x, mouse_y)};
+        if (!ground) {
             return;
         }
 
@@ -304,14 +297,13 @@ namespace cinder {
         float best_distance2 {radius * radius};
         int best {-1};
 
-        for (int i {0}; i < static_cast<int>(instances_.size()); ++i) {
-            // Distance dans le plan horizontal (on ignore la hauteur Y).
-            const float dx {instances_[static_cast<std::size_t>(i)].position.x - ground->x};
-            const float dz {instances_[static_cast<std::size_t>(i)].position.z - ground->z};
-            const float distance2 {dx * dx + dz * dz};
-            if (distance2 < best_distance2) {
+        for (std::size_t i {0}; i < instances_.size(); ++i) {
+            const glm::vec3& position {instances_[i].position};
+            const float dx {position.x - ground->x};
+            const float dz {position.z - ground->z};
+            if (const float distance2 {dx * dx + dz * dz}; distance2 < best_distance2) {
                 best_distance2 = distance2;
-                best = i;
+                best = static_cast<int>(i);
             }
         }
         selected_index_ = best;   // -1 si aucun bâtiment n'était assez proche
@@ -334,6 +326,7 @@ namespace cinder {
         // La souris n'est capturée (relative) qu'en mode vol. En mode curseur, elle
         // redevient un curseur normal -> on peut cliquer dans les fenêtres ImGui.
         SDL_SetWindowRelativeMouseMode(window_.native(), enabled);
+        ui_.set_mouse_enabled(!enabled);   // l'UI n'écoute la souris qu'en mode curseur
     }
 
     // Délègue tout le dessin au renderer, en lui passant la caméra, le monde et l'UI.
