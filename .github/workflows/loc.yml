@@ -1,0 +1,35 @@
+name: Compteur de lignes de code
+
+# Se déclenche à chaque push sur la branche principale.
+on:
+  push:
+    branches: [main, master]
+
+# Le workflow doit pouvoir réécrire le README (droit d'écriture sur le dépôt).
+permissions:
+  contents: write
+
+jobs:
+  compter:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Récupère le code du dépôt.
+      - uses: actions/checkout@v4
+
+      # 2) Compte les lignes et met à jour le bloc du README.
+      - name: Mettre à jour le compteur
+        run: python3 .github/scripts/update_loc.py
+
+      # 3) Committe la mise à jour SEULEMENT si le README a changé.
+      #    "[skip ci]" évite que ce commit relance le workflow (boucle infinie).
+      - name: Committer si changement
+        run: |
+          if ! git diff --quiet README.md; then
+            git config user.name  "loc-bot"
+            git config user.email "loc-bot@users.noreply.github.com"
+            git add README.md
+            git commit -m "🤖 Mise à jour du compteur de lignes de code [skip ci]"
+            git push
+          else
+            echo "Aucun changement de lignes de code."
+          fi

@@ -5,6 +5,12 @@
 Un jeu vidéo en monde ouvert urbain, construit intégralement à la main —
 sans moteur du commerce, une ligne de code après l'autre.
 
+<p align="center">
+  <img src="docs/screenshots/2026-07-21_avenue.png" width="90%" alt="Cinder City — premier aperçu d'une avenue">
+  <br>
+  <sub><i>🚧 En cours de développement — premier aperçu : une avenue rendue par le moteur maison (éditeur intégré visible à gauche).</i></sub>
+</p>
+
 ![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)
 ![SDL_gpu](https://img.shields.io/badge/SDL__gpu-rendu-AC162C?style=for-the-badge)
 ![SDL3](https://img.shields.io/badge/SDL-3.x-1D4ED8?style=for-the-badge)
@@ -14,6 +20,19 @@ sans moteur du commerce, une ligne de code après l'autre.
 ![Solo Dev](https://img.shields.io/badge/équipe-1%20développeur-FF6B35?style=flat-square)
 ![Map](https://img.shields.io/badge/monde-1%20km²-2EA043?style=flat-square)
 ![License](https://img.shields.io/badge/licence-tous%20droits%20réservés-D63A2F?style=flat-square)
+
+<!-- LOC:START -->
+![Lignes de code](https://img.shields.io/badge/lignes_de_code-2996-2EA043?style=for-the-badge)
+
+| Catégorie | Fichiers | Lignes |
+|---|---:|---:|
+| C++ (`src/`) | 38 | 2712 |
+| Shaders (GLSL) | 6 | 148 |
+| CMake | 1 | 136 |
+| **Total** | **45** | **2996** |
+
+<sub>Compté automatiquement à chaque push par `.github/workflows/loc.yml`.</sub>
+<!-- LOC:END -->
 
 <img src="assets/divider.svg" width="100%" alt="">
 
