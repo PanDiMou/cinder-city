@@ -22,16 +22,20 @@ sans moteur du commerce, une ligne de code après l'autre.
 ![License](https://img.shields.io/badge/licence-tous%20droits%20réservés-D63A2F?style=flat-square)
 
 <!-- LOC:START -->
-![Lignes de code](https://img.shields.io/badge/lignes_de_code-2989-2EA043?style=for-the-badge)
+![Lignes de code](https://img.shields.io/badge/lignes_de_code-2990-2EA043?style=for-the-badge)
 
 | Catégorie | Fichiers | Lignes |
 |---|---:|---:|
-| C++ (`src/`) | 38 | 2705 |
+| C++ (`src/`) | 38 | 2706 |
 | Shaders (GLSL) | 6 | 148 |
 | CMake | 1 | 136 |
-| **Total** | **45** | **2989** |
+| **Total** | **45** | **2990** |
 
-<sub>Mise à jour via `python3 .github/scripts/update_loc.py` (lancé à la main).</sub>
+<sub>Pour mettre à jour ce compteur, depuis la racine du dépôt :</sub>
+
+```bash
+python3 .github/scripts/update_loc.py
+```
 <!-- LOC:END -->
 
 <img src="assets/divider.svg" width="100%" alt="">

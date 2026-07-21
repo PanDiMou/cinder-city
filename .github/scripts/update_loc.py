@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 # Cinder City — compte les lignes de code du projet et met à jour le bloc
 # marqué (<!-- LOC:START --> ... <!-- LOC:END -->) dans le README.
-# Usage MANUEL, depuis la racine du dépôt :  python3 .github/scripts/update_loc.py
-# (La mise à jour du README part ensuite dans ton propre commit.)
+# Usage MANUEL :  python3 .github/scripts/update_loc.py
+# (Fonctionne depuis n'importe quel dossier : le script retrouve la racine du
+#  dépôt tout seul. La mise à jour du README part ensuite dans ton commit.)
 
 import os
 import re
+
+# Racine du dépôt = deux niveaux au-dessus de ce script (.github/scripts/...).
+# On s'y place d'entrée : tous les chemins relatifs (src/, README.md...) sont
+# ainsi corrects quel que soit le dossier d'où on lance le script.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.chdir(REPO_ROOT)
 
 # Catégories : (libellé, dossier racine, extensions)
 CATEGORIES = [
@@ -53,8 +60,10 @@ def main():
         "<!-- LOC:START -->\n"
         f"{badge}\n\n"
         + "\n".join(table) + "\n\n"
-        "<sub>Mise à jour via `python3 .github/scripts/update_loc.py` "
-        "(lancé à la main).</sub>\n"
+        "<sub>Pour mettre à jour ce compteur, depuis la racine du dépôt :</sub>\n\n"
+        "```bash\n"
+        "python3 .github/scripts/update_loc.py\n"
+        "```\n"
         "<!-- LOC:END -->"
     )
 
