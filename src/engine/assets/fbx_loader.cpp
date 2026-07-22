@@ -14,6 +14,17 @@
 #include <vector>
 
 namespace cinder {
+    namespace {
+        // Extrait le nom de fichier SANS chemin ni extension : d'un
+        // "textures/Generic_Road_01.png" on tire "Generic_Road_01".
+        std::string basename_no_ext(const std::string& path) {
+            const std::size_t slash {path.find_last_of("/\\")};
+            const std::string file {slash == std::string::npos ? path : path.substr(slash + 1)};
+            const std::size_t dot {file.find_last_of('.')};
+            return dot == std::string::npos ? file : file.substr(0, dot);
+        }
+    }
+
     mesh load_fbx(const std::string& path) {
         // 1) On règle les OPTIONS de chargement pour qu'ufbx nous rende le modèle
         //    directement dans NOS conventions (évite de convertir nous-mêmes).
@@ -88,6 +99,26 @@ namespace cinder {
                                1.0f - static_cast<float>(uv.y)}
                     });
                 }
+            }
+        }
+
+        // 5.bis) On récupère le NOM de la texture de couleur. Les noms de matériaux
+        //   FBX sont internes et inutiles ("lambert1"...) ; la vraie info est la
+        //   texture référencée par le canal "diffuse" (ou "base_color" en PBR). On
+        //   prend la première trouvée : nos modèles Synty partagent un seul atlas.
+        for (std::size_t m {0}; m < scene->materials.count; ++m) {
+            const ufbx_material* material {scene->materials.data[m]};
+            const ufbx_texture* tex {material->fbx.diffuse_color.texture};
+            if (tex == nullptr) {
+                tex = material->pbr.base_color.texture;   // repli sur le canal PBR
+            }
+            if (tex != nullptr) {
+                // relative_filename est le chemin tel qu'écrit dans le FBX ; on se
+                // rabat sur filename (chemin absolu de l'export) s'il est vide.
+                const ufbx_string& ref {tex->relative_filename.length > 0
+                    ? tex->relative_filename : tex->filename};
+                out.texture = basename_no_ext(ref.data);
+                break;   // une seule texture nous suffit
             }
         }
 

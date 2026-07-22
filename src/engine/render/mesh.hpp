@@ -18,6 +18,7 @@
 #ifndef CINDER_CITY_MESH_HPP
 #define CINDER_CITY_MESH_HPP
 
+#include <string>       // std::string (nom de la texture)
 #include <vector>       // std::vector = tableau de taille variable
 #include <glm/glm.hpp>  // vec3, vec2
 
@@ -34,6 +35,10 @@ namespace cinder {
         // Les indices référencent des sommets par leur position dans `vertices`.
         // Trois indices = un triangle. Ça évite de répéter les sommets partagés.
         std::vector<std::uint32_t> indices;
+        // Nom (sans extension) de la texture de couleur référencée par le FBX,
+        // ex "Generic_Road_01". Vide si le fichier n'en désigne aucune -> le
+        // renderer se rabattra alors sur la palette globale.
+        std::string texture;
     };
 }
 

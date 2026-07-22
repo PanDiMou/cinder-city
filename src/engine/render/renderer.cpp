@@ -213,11 +213,14 @@ namespace cinder {
 
             // Selon le matériau, on fournit au shader fragment la bonne ressource :
             if (material == material_type::textured) {
-                // Deux textures pour les modèles : la palette (couleur) et l'émissif
-                // (lumière des fenêtres). Le shader fait palette + émissif.
+                // Texture de couleur : celle du modèle s'il en a une (routes, trottoirs
+                // avec leur propre atlas), sinon la palette globale (repli). L'émissif
+                // reste global : le shader fait couleur + émissif.
+                const texture* model_texture {entity->texture()};
+                const texture& color_texture {model_texture != nullptr ? *model_texture : palette_};
                 const SDL_GPUTextureSamplerBinding bindings[2] {
-                    {.texture = palette_.native(),  .sampler = palette_.sampler()},
-                    {.texture = emissive_.native(), .sampler = emissive_.sampler()}
+                    {.texture = color_texture.native(), .sampler = color_texture.sampler()},
+                    {.texture = emissive_.native(),     .sampler = emissive_.sampler()}
                 };
                 SDL_BindGPUFragmentSamplers(pass, 0, bindings, 2);
             } else {

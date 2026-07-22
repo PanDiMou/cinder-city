@@ -52,10 +52,22 @@ namespace cinder {
         // Cas 2 : première demande -> on construit le chemin, on charge le FBX, on
         // l'uploade en gpu_mesh, et on range le tout dans le cache.
         const std::string path {find_model_path(name)};
+        // On charge d'abord le mesh dans une variable : on a besoin de son nom de
+        // texture AVANT de le confier au gpu_mesh (qui, lui, ne garde que la géométrie).
+        const mesh geometry {load_fbx(path)};
+        texture_names_.emplace(name, geometry.texture);   // relève la texture du modèle
         // emplace insère et renvoie une paire {itérateur vers l'élément, bool}.
         // On récupère l'itérateur via un "structured binding" [entry, inserted].
-        const auto [entry, inserted] {meshes_.emplace(name, std::make_unique<gpu_mesh>(*device_, load_fbx(path)))};
+        const auto [entry, inserted] {meshes_.emplace(name, std::make_unique<gpu_mesh>(*device_, geometry))};
         // On renvoie la référence DEPUIS le cache (durée de vie = celle du cache).
         return *entry->second;
+    }
+
+    const std::string& model_catalog::texture_name(const std::string& name) const {
+        // static : une seule chaîne vide, réutilisée comme valeur de repli. On
+        // renvoie une référence, donc elle doit survivre à l'appel (d'où "static").
+        static const std::string none {};
+        const auto found {texture_names_.find(name)};
+        return found != texture_names_.end() ? found->second : none;
     }
 }

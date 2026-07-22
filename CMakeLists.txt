@@ -105,6 +105,7 @@ add_executable(CinderCity
         src/engine/assets/fbx_loader.cpp
         src/engine/assets/stb_image_impl.cpp
         src/engine/assets/model_catalog.cpp
+        src/engine/assets/texture_catalog.cpp
         src/engine/scene/scene_loader.cpp
         src/engine/editor/ui.cpp
 )

@@ -24,6 +24,7 @@
 #include "engine/render/renderer.hpp"
 #include "engine/render/gpu_mesh.hpp"
 #include "engine/assets/model_catalog.hpp"
+#include "engine/assets/texture_catalog.hpp"
 #include "engine/scene/camera.hpp"
 #include "engine/editor/ui.hpp"
 #include "engine/scene/scene_loader.hpp"   // pour scene_instance
@@ -78,6 +79,7 @@ namespace cinder {
         ground          ground_;                                // la géométrie du sol
         gpu_mesh        ground_mesh_ {graphics_device_, ground_.geometry()}; // le sol envoyé au GPU
         model_catalog   catalog_ {graphics_device_};            // charge les modèles FBX une seule fois, à la demande
+        texture_catalog textures_ {graphics_device_};           // charge les textures une seule fois, à la demande
         world           world_;                                 // contient toutes les entités de la scène
         camera          camera_;                                // le point de vue
         ui              ui_ {graphics_device_};                 // l'interface (Dear ImGui)
@@ -98,7 +100,17 @@ namespace cinder {
             "SM_Gen_Bld_Background_08",
             "SM_Gen_Bld_Background_09",
             "SM_Gen_Bld_Background_10",
-            "SM_Gen_Bld_Background_11"
+            "SM_Gen_Bld_Background_11",
+            // Kit route/trottoir Generic (texture Generic_Road_01, résolue par modèle).
+            "SM_Gen_Env_Road_01",
+            "SM_Gen_Env_Road_Half_01",
+            "SM_Gen_Env_Road_Small_01",
+            "SM_Gen_Env_Road_Crossing_01",
+            "SM_Gen_Env_Road_Intersection_01",
+            "SM_Gen_Env_Road_Parking_01",
+            "SM_Gen_Env_Sidewalk_01",
+            "SM_Gen_Env_Sidewalk_Corner_01",
+            "SM_Gen_Env_Sidewalk_Half_01"
         };
         std::string              selected_model_ {"SM_Gen_Bld_Background_01"};
         // Tampon de la barre de recherche de la palette. ImGui écrit dedans

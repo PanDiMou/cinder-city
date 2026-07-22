@@ -41,6 +41,11 @@ namespace cinder {
         // c'est la première fois. Renvoie une RÉFÉRENCE : les entités pointeront dessus.
         [[nodiscard]] const gpu_mesh& get(const std::string&);
 
+        // Renvoie le NOM de texture (sans extension) que le FBX du modèle référence,
+        // ou une chaîne vide s'il n'en désigne aucune. À appeler APRÈS get() (c'est
+        // lui qui remplit l'info au chargement).
+        [[nodiscard]] const std::string& texture_name(const std::string&) const;
+
     private:
         // Pointeur vers le GPU (non possédé) : sert à uploader les modèles chargés.
         const graphics_device* device_;
@@ -48,6 +53,10 @@ namespace cinder {
         // Le cache : chaque nom de modèle -> son gpu_mesh (dans un unique_ptr pour
         // que l'adresse reste stable et que la mémoire soit libérée automatiquement).
         std::unordered_map<std::string, std::unique_ptr<gpu_mesh>> meshes_;
+
+        // En parallèle : chaque nom de modèle -> le nom de sa texture de couleur,
+        // relevé dans le FBX au moment du chargement.
+        std::unordered_map<std::string, std::string> texture_names_;
     };
 }
 

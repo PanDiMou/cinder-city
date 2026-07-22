@@ -22,6 +22,7 @@
 
 namespace cinder {
     class gpu_mesh;   // déclaration anticipée : on manipule juste des pointeurs/références dessus
+    class texture;    // idem : l'entité ne fait que POINTER vers une texture partagée
 
     // Quel shader (programme GPU) dessine l'entité. Chaque valeur = une "recette" de rendu.
     enum class material_type {
@@ -37,8 +38,12 @@ namespace cinder {
         // Note : `mesh_{&mesh}` stocke l'ADRESSE (&) du mesh -> on pointe dessus,
         // on ne le copie pas. Le dernier paramètre a une valeur PAR DÉFAUT
         // (= solid_color) : on peut l'omettre à l'appel.
-        entity(const gpu_mesh &mesh, const transform &transform, const glm::vec4 &color, const material_type material = material_type::solid_color)
-            : transform_{transform}, mesh_{&mesh}, color_{color}, material_{material} { }
+        // Le dernier paramètre `tex` (texture du modèle) a lui aussi une valeur par
+        // défaut (nullptr) : les entités sans texture (sol, cubes) l'omettent, et le
+        // renderer se rabat alors sur la palette globale. On écrit "class texture"
+        // (type élaboré) pour lever l'ambiguïté avec la méthode texture() ci-dessous.
+        entity(const gpu_mesh &mesh, const transform &transform, const glm::vec4 &color, const material_type material = material_type::solid_color, const class texture* tex = nullptr)
+            : transform_{transform}, mesh_{&mesh}, color_{color}, material_{material}, texture_{tex} { }
 
         entity(const entity&) = delete;              // une entité ne se copie pas
         entity& operator=(const entity&) = delete;
@@ -60,6 +65,8 @@ namespace cinder {
         [[nodiscard]] const gpu_mesh &mesh() const noexcept { return *mesh_; } // *mesh_ = "l'objet pointé"
         [[nodiscard]] const glm::vec4 &color() const noexcept { return color_; }
         [[nodiscard]] material_type material() const noexcept { return material_; }
+        // Texture propre au modèle, ou nullptr s'il n'en a pas (repli sur la palette).
+        [[nodiscard]] const class texture* texture() const noexcept { return texture_; }
 
     protected:
         // "protected" = accessible par cette classe ET ses classes filles (mais pas
@@ -71,6 +78,7 @@ namespace cinder {
         const gpu_mesh* mesh_;   // pointeur vers la géométrie partagée (non possédée)
         glm::vec4 color_;        // couleur (r, g, b, a)
         material_type material_; // quelle recette de rendu utiliser
+        const class texture* texture_ {nullptr}; // texture du modèle (partagée, non possédée)
     };
 }
 

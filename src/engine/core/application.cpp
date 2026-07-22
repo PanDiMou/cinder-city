@@ -261,7 +261,13 @@ namespace cinder {
     // (Re)crée le sol dans le monde. Le sol n'est pas une "instance" sauvegardée :
     // il est toujours là, on le recrée nous-mêmes (au démarrage et au rechargement).
     void application::spawn_ground() {
-        world_.spawn<static_prop>(ground_mesh_, transform{}, glm::vec4{0.30f, 0.30f, 0.32f, 1.0f}, material_type::grid_floor);
+        // Le sol de référence est légèrement ENFONCÉ (y = -0.05). Sinon les dalles de
+        // route Synty, parfaitement plates (épaisseur 0, posées à y=0), tomberaient
+        // dans le MÊME plan que ce sol -> "z-fighting" : le GPU ne sait pas laquelle
+        // est devant, la route clignote et paraît invisible ("impossible à placer").
+        transform ground_transform;
+        ground_transform.position.y = -0.05f;
+        world_.spawn<static_prop>(ground_mesh_, ground_transform, glm::vec4{0.30f, 0.30f, 0.32f, 1.0f}, material_type::grid_floor);
     }
 
     // Transforme une instance (donnée) en entité visible dans le monde.
@@ -272,7 +278,15 @@ namespace cinder {
         transform.rotation = glm::angleAxis(glm::radians(instance.rotation_y), glm::vec3{0.0f, 1.0f, 0.0f});
         transform.scale = glm::vec3{instance.scale};
 
-        world_.spawn<static_prop>(catalog_.get(instance.model), transform, glm::vec4{1.0f}, material_type::textured);
+        // On charge la géométrie (le catalogue relève au passage le nom de sa texture).
+        const gpu_mesh& mesh {catalog_.get(instance.model)};
+        // On résout cette texture : si le modèle en désigne une, on la charge via le
+        // cache de textures ; sinon (nom vide) on passe nullptr -> le renderer se
+        // rabattra sur la palette globale.
+        const std::string& tex_name {catalog_.texture_name(instance.model)};
+        const texture* tex {tex_name.empty() ? nullptr : &textures_.get(tex_name)};
+
+        world_.spawn<static_prop>(mesh, transform, glm::vec4{1.0f}, material_type::textured, tex);
     }
 
     // Écrit la scène courante (la liste d'instances) dans le fichier city.json.
