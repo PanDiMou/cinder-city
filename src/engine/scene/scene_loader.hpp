@@ -31,6 +31,9 @@ namespace cinder {
         glm::vec3   position {0.0f};       // où le poser
         float       rotation_y {0.0f};     // rotation autour de l'axe vertical, en degrés
         float       scale {1.0f};          // échelle uniforme
+        // Variante d'apparence (optionnelle), pour les véhicules : lettre de l'atlas
+        // Synty. "" (ou "A") = Taxi, "B" = Police, "C" = Coastguard. Vide par défaut.
+        std::string variant;
     };
 
     // Lit un fichier de scène JSON et renvoie la liste des instances.

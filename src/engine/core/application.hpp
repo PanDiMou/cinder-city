@@ -110,9 +110,15 @@ namespace cinder {
             "SM_Gen_Env_Road_Parking_01",
             "SM_Gen_Env_Sidewalk_01",
             "SM_Gen_Env_Sidewalk_Corner_01",
-            "SM_Gen_Env_Sidewalk_Half_01"
+            "SM_Gen_Env_Sidewalk_Half_01",
+            // Véhicule : arbre complet (carrosserie, vitres, roues, portes), texture
+            // carrosserie PolygonPalmCity (via l'alias SunshineCity -> PalmCity).
+            "SM_Veh_Sedan_01"
         };
         std::string              selected_model_ {"SM_Gen_Bld_Background_01"};
+        // Indice de la variante choisie dans l'IHM (0 = "Défaut"). Appliquée au
+        // prochain modèle posé : livrée A/B/C (véhicules) ou couleur unie.
+        int                      variant_index_ {0};
         // Tampon de la barre de recherche de la palette. ImGui écrit dedans
         // directement (tableau de char à la C, taille fixe, terminé par '\0').
         char                     search_[128] {};

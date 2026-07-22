@@ -16,6 +16,32 @@ namespace cinder {
     namespace {
         // Le fichier de scène : on le lit au démarrage et on l'écrit à la sauvegarde.
         constexpr const char* scene_path {"assets/city.json"};
+
+        // Remplace la LETTRE de variante (A/B/C) à la fin d'un nom de texture. Les
+        // atlas Synty se déclinent en "..._01_A", "..._01_B", "..._01_C" (mêmes UV,
+        // couleurs différentes) : ex "PolygonSunshineCity_Texture_01_A" + 'B' ->
+        // "..._01_B". Si le nom ne finit pas par une telle lettre, on le laisse tel quel.
+        std::string with_variant(std::string tex_name, const char letter) {
+            if (!tex_name.empty()) {
+                const char last {tex_name.back()};
+                if (last == 'A' || last == 'B' || last == 'C') {
+                    tex_name.back() = letter;
+                }
+            }
+            return tex_name;
+        }
+
+        // Variantes de véhicule proposées à la pose. Deux tableaux PARALLÈLES (même
+        // indice) : le libellé affiché, et la lettre d'atlas (A/B/C) réellement
+        // stockée dans l'instance. Ce sont des recoloriages COMPLETS de l'atlas Synty
+        // -> roues et vitres restent correctes (contrairement à une couleur unie, qui
+        // repeindrait toute la voiture d'un bloc à cause du mono-matériau).
+        constexpr const char* variant_labels[] {
+            "Taxi", "Police", "Coastguard"
+        };
+        constexpr const char* variant_codes[] {
+            "A", "B", "C"
+        };
     }
 
     // Constructeur : prépare la scène de départ.
@@ -202,6 +228,14 @@ namespace cinder {
                 }
             }
             ImGui::EndChild();   // TOUJOURS appelé, même si BeginChild a renvoyé faux
+
+            // Le select de variante n'a de sens que pour les véhicules (livrée
+            // Taxi/Police/Coastguard) : on ne l'affiche donc que si le modèle
+            // sélectionné en est un (nom qui commence par "SM_Veh").
+            if (selected_model_.rfind("SM_Veh", 0) == 0) {
+                ImGui::Combo("Variante", &variant_index_, variant_labels, IM_ARRAYSIZE(variant_labels));
+            }
+
             ImGui::TextWrapped("Tab pour le curseur, puis clic gauche sur le sol.");
         }
 
@@ -280,10 +314,14 @@ namespace cinder {
 
         // On charge la géométrie (le catalogue relève au passage le nom de sa texture).
         const gpu_mesh& mesh {catalog_.get(instance.model)};
-        // On résout cette texture : si le modèle en désigne une, on la charge via le
-        // cache de textures ; sinon (nom vide) on passe nullptr -> le renderer se
-        // rabattra sur la palette globale.
-        const std::string& tex_name {catalog_.texture_name(instance.model)};
+
+        // Livrée texturée : on part de la texture du modèle et, si l'instance demande
+        // une variante A/B/C, on remplace la lettre de l'atlas en conséquence.
+        std::string tex_name {catalog_.texture_name(instance.model)};
+        if (!instance.variant.empty()) {
+            tex_name = with_variant(tex_name, instance.variant.front());
+        }
+        // Nom vide -> nullptr : le renderer se rabattra sur la palette globale.
         const texture* tex {tex_name.empty() ? nullptr : &textures_.get(tex_name)};
 
         world_.spawn<static_prop>(mesh, transform, glm::vec4{1.0f}, material_type::textured, tex);
@@ -321,7 +359,12 @@ namespace cinder {
 
         // On ajoute d'abord l'instance à la liste (la source de vérité, sauvegardable),
         // puis on la matérialise dans le monde. *ground déréférence l'optional (le point).
-        const scene_instance instance {.model = selected_model_, .position = *ground};
+        scene_instance instance {.model = selected_model_, .position = *ground};
+        // On n'applique la variante qu'aux véhicules (le select n'apparaît que pour
+        // eux) : les bâtiments/routes gardent ainsi leur apparence par défaut.
+        if (selected_model_.rfind("SM_Veh", 0) == 0) {
+            instance.variant = variant_codes[variant_index_];   // livrée/couleur choisie dans l'IHM
+        }
         instances_.push_back(instance);
         spawn_instance(instance);
     }

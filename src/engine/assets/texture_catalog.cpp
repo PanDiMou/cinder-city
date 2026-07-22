@@ -11,13 +11,30 @@
 
 namespace cinder {
     namespace {
+        // Certains modèles Synty référencent un atlas sous un nom de pack DIFFÉRENT
+        // de celui qu'on possède, alors que l'image est en réalité la même (même
+        // agencement d'UV). On "traduit" donc ces noms vers l'atlas équivalent
+        // présent dans nos assets, avant de chercher le fichier.
+        //   - "PolygonSunshineCity_Texture_XX" est l'ancien "PolygonPalmCity_XX"
+        //     (ex : la carrosserie des véhicules) -> on mappe vers PalmCity.
+        std::string resolve_alias(const std::string& name) {
+            const std::string prefix {"PolygonSunshineCity_Texture_"};
+            if (name.rfind(prefix, 0) == 0) {   // le nom COMMENCE par le préfixe ?
+                return "PolygonPalmCity_" + name.substr(prefix.size());
+            }
+            return name;   // aucun alias connu -> on garde le nom tel quel
+        }
+
         // Les textures sont rangées par sous-dossiers sous "assets/Textures/" (Alts/,
         // Emissive/, Buildings/...). On ne connaît pas le sous-dossier d'une image
         // depuis son seul nom : on cherche donc récursivement "<nom>.<ext>" sous ce
         // dossier. (Fait une seule fois par image, car le résultat est mis en cache.)
-        std::string find_texture_path(const std::string& name) {
+        std::string find_texture_path(const std::string& raw_name) {
             namespace fs = std::filesystem;
             const fs::path root {"assets/Textures"};
+
+            // On traduit d'abord les alias connus (pack équivalent).
+            const std::string name {resolve_alias(raw_name)};
 
             // On accepte le nom avec OU sans extension : si "name" contient déjà un
             // point, on le cherche tel quel ; sinon on essaie .png puis .tga.

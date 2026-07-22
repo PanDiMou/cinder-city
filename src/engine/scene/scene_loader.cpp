@@ -41,6 +41,7 @@ namespace cinder {
             // .value("clef", défaut) : lit un champ optionnel (défaut si absent).
             instance.rotation_y = node.value("rotation_y", 0.0f);
             instance.scale = node.value("scale", 1.0f);
+            instance.variant = node.value("variant", std::string{});   // optionnel
 
             instances.push_back(instance);
         }
@@ -56,12 +57,18 @@ namespace cinder {
         for (const scene_instance& instance : instances) {
             // On ajoute un objet JSON par instance. La syntaxe {{"clef", valeur}, ...}
             // décrit une paire clef/valeur.
-            data["instances"].push_back({
+            nlohmann::json entry {
                 {"model", instance.model},
                 {"position", {instance.position.x, instance.position.y, instance.position.z}},
                 {"rotation_y", instance.rotation_y},
                 {"scale", instance.scale}
-            });
+            };
+            // On n'écrit "variant" que s'il est renseigné, pour ne pas alourdir les
+            // instances qui gardent leur apparence par défaut (la plupart).
+            if (!instance.variant.empty()) {
+                entry["variant"] = instance.variant;
+            }
+            data["instances"].push_back(entry);
         }
 
         // Ouvre le fichier en écriture (le crée/écrase). Échec -> erreur.
