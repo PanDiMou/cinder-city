@@ -1,108 +1,118 @@
-<svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="Architecture de Cinder City">
+<svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="Architecture de Cinder City">
   <title>Architecture de Cinder City — du data au pixel</title>
-  <desc>La ville est décrite dans city.json ; le scene_loader la lit, le model_catalog charge chaque modèle FBX une fois, chaque instance devient une entity dans le world, puis le renderer dessine chaque entité selon son matériau.</desc>
+  <desc>La ville est décrite dans city.json ; le scene_loader la lit, le model_catalog charge chaque modèle FBX une fois et le texture_catalog sa texture, chaque instance devient une entity dans le world, puis le renderer dessine chaque entité selon son matériau et sa texture.</desc>
 
-  <defs>
-    <style>
-      .card   { fill: #0f1622; stroke: #263143; stroke-width: 1.5; }
-      .box    { fill: #17202e; stroke: #2c3a4f; stroke-width: 1.5; }
-      .loop   { fill: #141d2b; stroke: #2c3a4f; stroke-width: 1.5; }
-      .title  { fill: #e6edf3; font-weight: 700; }
-      .sub    { fill: #8b98a9; }
-      .mut    { fill: #7c8b9e; }
-      .mono   { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .arrow  { stroke: #55647a; stroke-width: 2; fill: none; }
-    </style>
-  </defs>
+  <!-- Fond TRANSPARENT (pas de carte). Les couleurs s'adaptent au thème clair/sombre. -->
+  <style>
+    .title { fill: #1f2430; font-weight: 700; }
+    .sub   { fill: #4b5563; }
+    .mut   { fill: #6b7280; }
+    .box   { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+    .loop  { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1.5; }
+    .arrow { stroke: #9aa5b1; stroke-width: 2; fill: none; }
+    .ah    { fill: #9aa5b1; }
+    .mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (prefers-color-scheme: dark) {
+      .title { fill: #e6edf3; }
+      .sub   { fill: #9aa5b1; }
+      .mut   { fill: #8b98a9; }
+      .box   { fill: #17202e; stroke: #2c3a4f; }
+      .loop  { fill: #141d2b; stroke: #2c3a4f; }
+      .arrow { stroke: #55647a; }
+      .ah    { fill: #55647a; }
+    }
+  </style>
 
-  <rect x="6" y="6" width="888" height="468" rx="16" class="card"/>
-
-  <text x="34" y="46" class="title" font-size="19">Architecture — du data au pixel</text>
-  <text x="34" y="68" class="sub" font-size="13">La ville vit en données ; le trajet est rejoué à chaque frame.</text>
+  <text x="30" y="34" class="title" font-size="19">Architecture — du data au pixel</text>
+  <text x="30" y="56" class="sub" font-size="13">La ville vit en données ; le trajet est rejoué à chaque frame.</text>
 
   <!-- application loop -->
-  <rect x="34" y="92" width="832" height="66" rx="10" class="loop"/>
-  <circle cx="60" cy="125" r="6" fill="#64748b"/>
-  <text x="76" y="122" class="title" font-size="15">application — boucle de jeu</text>
-  <text x="76" y="142" class="sub mono" font-size="12.5">while (running) { process_events();  update_camera(Δt);  renderer.draw(world); }</text>
+  <rect x="30" y="80" width="840" height="66" rx="10" class="loop"/>
+  <circle cx="56" cy="113" r="6" fill="#64748b"/>
+  <text x="72" y="110" class="title" font-size="15">application — boucle de jeu</text>
+  <text x="72" y="130" class="sub mono" font-size="12.5">while (running) { process_events();  update_camera(&#916;t);  renderer.draw(world); }</text>
 
   <!-- arrow down -->
-  <line x1="450" y1="158" x2="450" y2="196" class="arrow"/>
-  <polygon points="450,204 444,192 456,192" fill="#55647a"/>
+  <line x1="450" y1="146" x2="450" y2="184" class="arrow"/>
+  <polygon points="450,192 444,180 456,180" class="ah"/>
 
   <!-- pipeline -->
   <!-- box 1 : city.json -->
-  <rect x="34" y="224" width="150" height="82" rx="10" class="box"/>
-  <rect x="34" y="224" width="150" height="5" rx="2.5" fill="#4aa3ff"/>
-  <text x="50" y="256" class="title mono" font-size="15">city.json</text>
-  <text x="50" y="278" class="sub" font-size="12">scène (données)</text>
-  <text x="50" y="294" class="mut" font-size="11">modèles + transforms</text>
+  <rect x="30" y="212" width="150" height="82" rx="10" class="box"/>
+  <rect x="30" y="212" width="150" height="5" rx="2.5" fill="#4aa3ff"/>
+  <text x="46" y="244" class="title mono" font-size="15">city.json</text>
+  <text x="46" y="266" class="sub" font-size="12">scène (données)</text>
+  <text x="46" y="282" class="mut" font-size="11">modèles + transforms</text>
 
   <!-- box 2 : model_catalog -->
-  <rect x="219" y="224" width="150" height="82" rx="10" class="box"/>
-  <rect x="219" y="224" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
-  <text x="235" y="256" class="title mono" font-size="14">model_catalog</text>
-  <text x="235" y="278" class="sub" font-size="12">FBX → gpu_mesh</text>
-  <text x="235" y="294" class="mut" font-size="11">VRAM, chargé 1×</text>
+  <rect x="215" y="212" width="150" height="82" rx="10" class="box"/>
+  <rect x="215" y="212" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
+  <text x="231" y="244" class="title mono" font-size="14">model_catalog</text>
+  <text x="231" y="266" class="sub" font-size="12">FBX &#8594; gpu_mesh</text>
+  <text x="231" y="282" class="mut" font-size="11">géométrie + texture</text>
 
   <!-- box 3 : entity -->
-  <rect x="404" y="224" width="150" height="82" rx="10" class="box"/>
-  <rect x="404" y="224" width="150" height="5" rx="2.5" fill="#a78bfa"/>
-  <text x="420" y="256" class="title mono" font-size="15">entity</text>
-  <text x="420" y="278" class="sub" font-size="12">transform + matériau</text>
-  <text x="420" y="294" class="mut" font-size="11">dans le world</text>
+  <rect x="400" y="212" width="150" height="82" rx="10" class="box"/>
+  <rect x="400" y="212" width="150" height="5" rx="2.5" fill="#a78bfa"/>
+  <text x="416" y="244" class="title mono" font-size="15">entity</text>
+  <text x="416" y="266" class="sub" font-size="12">transform &#183; matériau</text>
+  <text x="416" y="282" class="mut" font-size="11">texture &#183; dans le world</text>
 
   <!-- box 4 : renderer -->
-  <rect x="589" y="224" width="150" height="82" rx="10" class="box"/>
-  <rect x="589" y="224" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
-  <text x="605" y="256" class="title mono" font-size="15">renderer</text>
-  <text x="605" y="278" class="sub" font-size="12">pipeline / matériau</text>
-  <text x="605" y="294" class="mut" font-size="11">MVP + couleur / texture</text>
+  <rect x="585" y="212" width="150" height="82" rx="10" class="box"/>
+  <rect x="585" y="212" width="150" height="5" rx="2.5" fill="#ff7a7a"/>
+  <text x="601" y="244" class="title mono" font-size="15">renderer</text>
+  <text x="601" y="266" class="sub" font-size="12">pipeline / matériau</text>
+  <text x="601" y="282" class="mut" font-size="11">MVP + texture du modèle</text>
 
   <!-- box 5 : screen -->
-  <rect x="774" y="224" width="92" height="82" rx="10" class="box"/>
-  <rect x="774" y="224" width="92" height="5" rx="2.5" fill="#2ea043"/>
-  <text x="790" y="256" class="title" font-size="15">écran</text>
-  <text x="790" y="278" class="sub" font-size="12">pixels</text>
+  <rect x="770" y="212" width="100" height="82" rx="10" class="box"/>
+  <rect x="770" y="212" width="100" height="5" rx="2.5" fill="#2ea043"/>
+  <text x="786" y="244" class="title" font-size="15">écran</text>
+  <text x="786" y="266" class="sub" font-size="12">pixels</text>
 
   <!-- arrows between -->
   <g>
-    <line x1="184" y1="265" x2="211" y2="265" class="arrow"/><polygon points="219,265 207,259 207,271" fill="#55647a"/>
-    <text x="201" y="216" class="mut" font-size="10.5" text-anchor="middle">scene_loader</text>
+    <line x1="180" y1="253" x2="207" y2="253" class="arrow"/><polygon points="215,253 203,247 203,259" class="ah"/>
+    <text x="197" y="204" class="mut" font-size="10.5" text-anchor="middle">scene_loader</text>
 
-    <line x1="369" y1="265" x2="396" y2="265" class="arrow"/><polygon points="404,265 392,259 392,271" fill="#55647a"/>
-    <text x="386" y="216" class="mut" font-size="10.5" text-anchor="middle">instancie</text>
+    <line x1="365" y1="253" x2="392" y2="253" class="arrow"/><polygon points="400,253 388,247 388,259" class="ah"/>
+    <text x="382" y="204" class="mut" font-size="10.5" text-anchor="middle">instancie</text>
 
-    <line x1="554" y1="265" x2="581" y2="265" class="arrow"/><polygon points="589,265 577,259 577,271" fill="#55647a"/>
-    <text x="571" y="216" class="mut" font-size="10.5" text-anchor="middle">lu du world</text>
+    <line x1="550" y1="253" x2="577" y2="253" class="arrow"/><polygon points="585,253 573,247 573,259" class="ah"/>
+    <text x="567" y="204" class="mut" font-size="10.5" text-anchor="middle">lu du world</text>
 
-    <line x1="739" y1="265" x2="766" y2="265" class="arrow"/><polygon points="774,265 762,259 762,271" fill="#55647a"/>
-    <text x="756" y="216" class="mut" font-size="10.5" text-anchor="middle">dessine</text>
+    <line x1="735" y1="253" x2="762" y2="253" class="arrow"/><polygon points="770,253 758,247 758,259" class="ah"/>
+    <text x="752" y="204" class="mut" font-size="10.5" text-anchor="middle">dessine</text>
   </g>
 
   <!-- modules legend -->
-  <text x="34" y="356" class="sub" font-size="13" font-weight="700">Modules</text>
+  <text x="30" y="344" class="sub" font-size="13" font-weight="700">Modules</text>
   <g font-size="12.5">
     <!-- left column -->
-    <circle cx="44" cy="382" r="6" fill="#64748b"/>
-    <text x="58" y="386" class="title mono">core</text>
-    <text x="130" y="386" class="mut" font-size="11">platform · window · application · log</text>
+    <circle cx="40" cy="370" r="6" fill="#64748b"/>
+    <text x="54" y="374" class="title mono">core</text>
+    <text x="126" y="374" class="mut" font-size="11">platform &#183; window &#183; application &#183; log</text>
 
-    <circle cx="44" cy="410" r="6" fill="#ff7a7a"/>
-    <text x="58" y="414" class="title mono">render</text>
-    <text x="130" y="414" class="mut" font-size="11">device · shader · gpu_mesh · texture · renderer</text>
+    <circle cx="40" cy="398" r="6" fill="#ff7a7a"/>
+    <text x="54" y="402" class="title mono">render</text>
+    <text x="126" y="402" class="mut" font-size="11">device &#183; shader &#183; gpu_mesh &#183; texture &#183; renderer</text>
 
-    <circle cx="44" cy="438" r="6" fill="#f0a35e"/>
-    <text x="58" y="442" class="title mono">assets</text>
-    <text x="130" y="442" class="mut" font-size="11">fbx_loader · stb_image · model_catalog</text>
+    <circle cx="40" cy="426" r="6" fill="#f0a35e"/>
+    <text x="54" y="430" class="title mono">assets</text>
+    <text x="126" y="430" class="mut" font-size="11">fbx_loader &#183; stb_image &#183; model_catalog &#183; texture_catalog</text>
 
     <!-- right column -->
-    <circle cx="470" cy="382" r="6" fill="#4aa3ff"/>
-    <text x="484" y="386" class="title mono">scene</text>
-    <text x="556" y="386" class="mut" font-size="11">camera · transform · scene_loader</text>
+    <circle cx="466" cy="370" r="6" fill="#4aa3ff"/>
+    <text x="480" y="374" class="title mono">scene</text>
+    <text x="552" y="374" class="mut" font-size="11">camera &#183; transform &#183; scene_loader</text>
 
-    <circle cx="470" cy="410" r="6" fill="#a78bfa"/>
-    <text x="484" y="414" class="title mono">world</text>
-    <text x="556" y="414" class="mut" font-size="11">world · entity · static_prop · ground</text>
+    <circle cx="466" cy="398" r="6" fill="#a78bfa"/>
+    <text x="480" y="402" class="title mono">world</text>
+    <text x="552" y="402" class="mut" font-size="11">world &#183; entity &#183; static_prop &#183; ground</text>
+
+    <circle cx="466" cy="426" r="6" fill="#f0a35e"/>
+    <text x="480" y="430" class="title mono">editor</text>
+    <text x="552" y="430" class="mut" font-size="11">ui (Dear ImGui — éditeur in-game)</text>
   </g>
 </svg>

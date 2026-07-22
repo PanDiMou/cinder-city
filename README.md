@@ -6,9 +6,9 @@ Un jeu vidéo en monde ouvert urbain, construit intégralement à la main —
 sans moteur du commerce, une ligne de code après l'autre.
 
 <p align="center">
-  <img src="docs/screenshots/2026-07-21_avenue.png" width="90%" alt="Cinder City — premier aperçu d'une avenue">
+  <img src="docs/screenshots/2026-07-22_avenue-pavee-police.png" width="90%" alt="Cinder City — avenue pavée avec chaussée, passages piétons et véhicule">
   <br>
-  <sub><i>🚧 En cours de développement — premier aperçu : une avenue rendue par le moteur maison (éditeur intégré visible à gauche).</i></sub>
+  <sub><i>🚧 En cours de développement — dernier aperçu du moteur maison : l'avenue pavée (chaussée, passages piétons, véhicule de police), éditeur intégré à gauche. Historique complet dans la galerie, plus bas.</i></sub>
 </p>
 
 ![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)
@@ -22,14 +22,14 @@ sans moteur du commerce, une ligne de code après l'autre.
 ![License](https://img.shields.io/badge/licence-tous%20droits%20réservés-D63A2F?style=flat-square)
 
 <!-- LOC:START -->
-![Lignes de code](https://img.shields.io/badge/lignes_de_code-2990-2EA043?style=for-the-badge)
+![Lignes de code](https://img.shields.io/badge/lignes_de_code-3311-2EA043?style=for-the-badge)
 
 | Catégorie | Fichiers | Lignes |
 |---|---:|---:|
-| C++ (`src/`) | 38 | 2706 |
+| C++ (`src/`) | 40 | 3026 |
 | Shaders (GLSL) | 6 | 148 |
-| CMake | 1 | 136 |
-| **Total** | **45** | **2990** |
+| CMake | 1 | 137 |
+| **Total** | **47** | **3311** |
 
 <sub>Pour mettre à jour ce compteur, depuis la racine du dépôt :</sub>
 
@@ -88,8 +88,9 @@ Un socle **C++23 moderne**, sans moteur, assemblé autour de technologies
 | 🧬 Shaders | ![shadercross](https://img.shields.io/badge/SDL__shadercross-AC162C?style=flat-square) | Traduction SPIR-V → format natif au runtime | ✅ |
 | 📐 Mathématiques | ![GLM](https://img.shields.io/badge/GLM-5586A4?style=flat-square) | Algèbre linéaire 3D (matrices, quaternions) | ✅ |
 | 📦 Import de modèles | ![ufbx](https://img.shields.io/badge/ufbx-6C4AB6?style=flat-square) | Chargement des modèles FBX (mètres, Y-up, UV) | ✅ |
-| 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage des images (PNG / TGA) vers la VRAM | ✅ |
-| 🌃 Émissif | ![GLSL](https://img.shields.io/badge/GLSL-4B8BBE?style=flat-square) | Fenêtres et enseignes lumineuses (palette + émissif additionnés) | ✅ |
+| 🖼️ Textures | ![stb_image](https://img.shields.io/badge/stb__image-5586A4?style=flat-square) | Décodage PNG / TGA, cache par fichier, **une texture par modèle** | ✅ |
+| 🌃 Émissif | ![GLSL](https://img.shields.io/badge/GLSL-4B8BBE?style=flat-square) | Fenêtres et enseignes lumineuses (couleur + émissif additionnés) | ✅ |
+| 🚗 Véhicules | ![Synty](https://img.shields.io/badge/POLYGON-6C4AB6?style=flat-square) | Berline complète + **livrées par instance** (Taxi / Police / Coastguard) | ✅ |
 | 🗺️ Scènes (données) | ![JSON](https://img.shields.io/badge/nlohmann/json-3B5998?style=flat-square) | Ville décrite en données (`city.json`), hors du code | ✅ |
 | 🧩 Entités | ![OOP](https://img.shields.io/badge/OOP-6C4AB6?style=flat-square) | Modèle game object maison (transform · entity · world) | ✅ |
 | 🧭 Éditeur in-game | ![Dear ImGui](https://img.shields.io/badge/Dear_ImGui-FF9800?style=flat-square) | Poser / sélectionner / éditer / sauver la ville à la souris | ✅ |
@@ -107,7 +108,7 @@ Le moteur est découpé en modules à responsabilité unique :
 src/engine/
 ├── core/     platform (SDL) · window · application · log
 ├── render/   graphics_device · shader · gpu_buffer · gpu_mesh · texture · renderer
-├── assets/   fbx_loader (import FBX) · stb_image (décodage PNG) · model_catalog
+├── assets/   fbx_loader (import FBX) · stb_image (PNG/TGA) · model_catalog · texture_catalog
 ├── scene/    camera (vol libre) · transform · scene_loader (city.json)
 ├── world/    world · entity · static_prop · ground
 └── editor/   ui (Dear ImGui — éditeur de ville in-game)
@@ -119,15 +120,19 @@ src/engine/
 indices), soit générée à la main (le sol), soit **importée d'un fichier FBX**
 via `fbx_loader`. Elle est uploadée en VRAM sous forme de `gpu_mesh` — chargée
 **une seule fois** par le `model_catalog` puis partagée par toutes ses instances.
-Chaque géométrie est portée par une **entité** (un `transform`, une couleur et un
-**matériau**) qui vit dans le **`world`**. Chaque frame, le **`renderer`**
-parcourt le monde et dessine chaque entité en sélectionnant le **pipeline
-correspondant à son matériau** : `solid_color` pour les objets unis, `grid_floor`
-pour le sol quadrillé, et `textured` pour les modèles échantillonnés dans une
-**palette** (atlas Synty). Le pipeline texturé lie **deux textures** : l'atlas de
-couleur et son **émissif** — le shader les additionne (`base + lueur`), ce qui
-allume fenêtres et enseignes là où l'atlas émissif en contient. Un interrupteur
-dans `textured.frag` permet de couper la lueur sans toucher au code C++.
+Chaque géométrie est portée par une **entité** (un `transform`, une couleur, un
+**matériau** et une **texture**) qui vit dans le **`world`**. Chaque frame, le
+**`renderer`** parcourt le monde et dessine chaque entité en sélectionnant le
+**pipeline correspondant à son matériau** : `solid_color` pour les objets unis,
+`grid_floor` pour le sol quadrillé, et `textured` pour les modèles. Chaque modèle
+utilise **sa propre texture** : le `model_catalog` relève l'atlas référencé dans
+le FBX, le `texture_catalog` le charge **une seule fois** (recherche sous
+`assets/Textures`, avec des alias de packs équivalents), et le renderer le lie —
+repli sur une **palette globale** si le modèle n'en désigne aucune. Le pipeline
+texturé lie **deux textures** : l'atlas de couleur et son **émissif** — le shader
+les additionne (`base + lueur`), ce qui allume fenêtres et enseignes là où l'atlas
+émissif en contient. Un interrupteur dans `textured.frag` coupe la lueur sans
+toucher au C++.
 
 **La ville en données, pas en code.** La disposition de la ville ne vit plus dans
 le C++ : elle est décrite dans un fichier de scène **`city.json`** (une liste
@@ -139,12 +144,22 @@ au démarrage pour peupler le monde. Ajouter ou déplacer un bâtiment se fait e
 { "model": "SM_Gen_Bld_Background_01", "position": [10, 0, 0], "rotation_y": 90, "scale": 1.0 }
 ```
 
-La scène actuelle en est la preuve : l'**avenue de démonstration** (deux rangées
-de façades face à face, espacées selon la largeur réelle de chaque modèle) a été
-**générée en données** — 28 instances écrites dans `city.json`, zéro ligne de C++.
+La scène actuelle en est la preuve : l'**avenue de démonstration** — deux rangées
+de façades face à face, une **chaussée pavée** (dalles de route + passages piétons)
+et quelques **véhicules** — est **entièrement générée en données** dans `city.json`,
+zéro ligne de C++.
+
+**Variantes par instance.** Une instance peut porter un champ optionnel `variant`
+qui change son apparence sans dupliquer le modèle. Pour les véhicules, il choisit
+la **livrée** (lettre de l'atlas Synty : `A` Taxi, `B` Police, `C` Coastguard) —
+même géométrie, texture différente :
+
+```json
+{ "model": "SM_Veh_Sedan_01", "position": [-10, 0, -5], "rotation_y": 90, "variant": "B" }
+```
 
 **Modèle d'entités (OOP).** Une classe de base `entity` (transform, mesh, couleur,
-matériau, `update()`) se spécialise par héritage : `static_prop` (immobile),
+matériau, texture, `update()`) se spécialise par héritage : `static_prop` (immobile),
 bientôt `vehicle`, `pedestrian`… Ajouter un objet au monde tient en une ligne :
 
 ```cpp
@@ -161,7 +176,9 @@ tourner, redimensionner ou supprimer** — le tout **sauvegardé** dans `city.js
 `Tab` bascule entre pilotage caméra et interaction avec l'interface. Le panneau
 est organisé en **sections repliables** (Infos · Outil · Modèles · Sélection ·
 Scène), avec une **barre de recherche** qui filtre la palette de modèles en direct
-et une liste défilante — prêt pour des centaines de modèles.
+et une liste défilante — prêt pour des centaines de modèles. Quand un **véhicule**
+est sélectionné, un menu **Livrée** (Taxi / Police / Coastguard) apparaît et
+s'applique à la pose suivante.
 
 **Principes de code.** RAII systématique (chaque ressource GPU possédée et
 libérée par un objet), C++23 (concepts, `std::format`, designated initializers),
@@ -213,18 +230,36 @@ référencés **par nom** dans `city.json`, jamais par chemin en dur dans le cod
 | ✅ | Éditeur in-game — poser / sélectionner / éditer / sauver la ville | Fait |
 | ✅ | Assets triés par catégorie + tri des modèles 100 % texturables | Fait |
 | ✅ | Rendu émissif — fenêtres/enseignes lumineuses (2 textures additionnées) | Fait |
-| ✅ | Avenue de démonstration générée en données (28 façades placées au mètre) | Fait |
 | ✅ | Éditeur organisé — sections repliables, recherche, panneau ancré | Fait |
-| ⬜ | Multi-matériaux par sous-mesh — chaque partie d'un modèle avec sa texture | À venir |
-| ⬜ | Route au sol + surlignage de la sélection | À venir |
-| ⬜ | Peupler la ville — véhicules, PNJ | À venir |
+| ✅ | Texture par modèle (résolue du FBX) + cache `texture_catalog` + alias de packs | Fait |
+| ✅ | Avenue pavée — chaussée + passages piétons, générés en données | Fait |
+| ✅ | Véhicules — berline + livrées par instance (Taxi / Police / Coastguard) | Fait |
+| ⬜ | Multi-matériaux par sous-mesh — vitres/carrosserie distinctes, vraies couleurs | À venir |
+| ⬜ | Véhicules articulés — garder l'arbre FBX : roues qui tournent, portes qui s'ouvrent | À venir |
+| ⬜ | Surlignage de la sélection dans l'éditeur | À venir |
+| ⬜ | Peupler la ville — circulation, PNJ | À venir |
 | ⬜ | Physique & collisions (Jolt) | À venir |
 
-**Prochaine étape :** 🏙️ Le rendu multi-matériaux, puis peupler la ville.
+**Prochaine étape :** 🎨 Le rendu multi-matériaux — qui débloque à la fois les
+vitres correctes, les vraies couleurs de carrosserie, et les véhicules articulés.
 
 ```
-Progression du socle   [■■■■■■■■□□]  80%
+Progression du socle   [■■■■■■■■▌□]  85%
 ```
+
+<img src="assets/divider.svg" width="100%" alt="">
+
+## 📸 Galerie
+
+L'évolution du moteur, capture après capture — la plus récente en premier.
+
+<!-- GALLERY:START -->
+<table>
+  <tr><td align="center" width="50%"><a href="docs/screenshots/2026-07-22_avenue-pavee-police.png"><img src="docs/screenshots/2026-07-22_avenue-pavee-police.png" width="100%"></a><br><sub><b>2026-07-22</b> — Avenue pavee police</sub></td><td align="center" width="50%"><a href="docs/screenshots/2026-07-21_avenue.png"><img src="docs/screenshots/2026-07-21_avenue.png" width="100%"></a><br><sub><b>2026-07-21</b> — Avenue</sub></td></tr>
+</table>
+<!-- GALLERY:END -->
+
+<sub>Grille régénérée depuis <code>docs/screenshots/</code> via <code>python3 .github/scripts/update_gallery.py</code> (nommer les fichiers <code>AAAA-MM-JJ_description.png</code>).</sub>
 
 <img src="assets/divider.svg" width="100%" alt="">
 
