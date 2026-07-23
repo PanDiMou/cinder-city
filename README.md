@@ -22,14 +22,14 @@ sans moteur du commerce, une ligne de code après l'autre.
 ![License](https://img.shields.io/badge/licence-tous%20droits%20réservés-D63A2F?style=flat-square)
 
 <!-- LOC:START -->
-![Lignes de code](https://img.shields.io/badge/lignes_de_code-3311-2EA043?style=for-the-badge)
+![Lignes de code](https://img.shields.io/badge/lignes_de_code-3313-2EA043?style=for-the-badge)
 
 | Catégorie | Fichiers | Lignes |
 |---|---:|---:|
-| C++ (`src/`) | 40 | 3026 |
+| C++ (`src/`) | 40 | 3028 |
 | Shaders (GLSL) | 6 | 148 |
 | CMake | 1 | 137 |
-| **Total** | **47** | **3311** |
+| **Total** | **47** | **3313** |
 
 <sub>Pour mettre à jour ce compteur, depuis la racine du dépôt :</sub>
 
